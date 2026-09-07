@@ -9,19 +9,23 @@
 <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;600;700&family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@500;600&display=swap" rel="stylesheet">
 <style>
   :root{
-    --bg: #F5F7F6;
+    --bg: #F3F5FA;
     --surface: #FFFFFF;
-    --ink: #16302C;
-    --ink-soft: #587068;
-    --teal: #1E8F84;
-    --teal-deep: #14615A;
-    --teal-wash: #E4F1EF;
-    --coral: #F0904E;
-    --coral-wash: #FCE9D9;
-    --line: #DCE6E3;
-    --danger: #C6533F;
+    --ink: #182449;
+    --ink-soft: #5B6690;
+    --navy: #1B2A6B;
+    --navy-bright: #000F9F;
+    --navy-wash: #E8EAF6;
+    --teal: #13B3B3;
+    --teal-bright: #00BBB4;
+    --teal-wash: #E1F6F5;
+    --coral: #E8583A;
+    --coral-bright: #FF4713;
+    --coral-wash: #FDEAE4;
+    --line: #DDE1EF;
+    --danger: #C6503A;
     --radius: 14px;
-    --shadow: 0 1px 2px rgba(20,50,45,0.06), 0 8px 24px -12px rgba(20,50,45,0.18);
+    --shadow: 0 1px 2px rgba(27,42,107,0.06), 0 8px 24px -12px rgba(27,42,107,0.20);
     --font-display: 'Space Grotesk', sans-serif;
     --font-body: 'IBM Plex Sans', sans-serif;
     --font-mono: 'IBM Plex Mono', monospace;
@@ -34,9 +38,11 @@
     color: var(--ink);
     -webkit-font-smoothing: antialiased;
   }
-  .app{ max-width: 720px; margin: 0 auto; padding: 0 0 96px; }
+  .app{ max-width: 860px; margin: 0 auto; padding: 0 0 110px; }
+
+  /* Header */
   .hero{
-    background: linear-gradient(155deg, var(--teal-deep), var(--teal) 65%);
+    background: linear-gradient(155deg, var(--navy), var(--teal) 75%);
     color: white;
     padding: 28px 20px 34px;
     border-radius: 0 0 22px 22px;
@@ -47,7 +53,7 @@
     content:"";
     position:absolute; right:-40px; top:-40px; width:180px; height:180px;
     border-radius:50%;
-    background: radial-gradient(circle, rgba(240,144,78,0.35), transparent 70%);
+    background: radial-gradient(circle, rgba(232,88,58,0.40), transparent 70%);
   }
   .brand{ display:flex; align-items:center; gap:10px; margin-bottom: 18px; }
   .brand-mark{
@@ -63,7 +69,9 @@
     font-family: var(--font-display); font-weight:700; font-size: 22px;
     margin: 0 0 4px; letter-spacing: -0.01em;
   }
-  .hero p{ margin:0; font-size:13px; opacity:0.85; max-width: 46ch; }
+  .hero p{ margin:0; font-size:13px; opacity:0.85; max-width: 50ch; }
+
+  /* Sections */
   .card{
     background: var(--surface);
     border-radius: var(--radius);
@@ -74,13 +82,29 @@
     z-index: 2;
   }
   .card + .card{ margin-top: 16px; }
+  .section-header-row{ display:flex; align-items:center; justify-content:space-between; gap:10px; flex-wrap:wrap; margin-bottom:12px; }
   .section-label{
     font-family: var(--font-display); font-weight:600; font-size: 13px;
-    color: var(--teal-deep); text-transform: uppercase; letter-spacing: 0.06em;
-    margin: 0 0 12px;
+    color: var(--navy); text-transform: uppercase; letter-spacing: 0.06em;
+    margin: 0;
     display:flex; align-items:center; gap:8px;
   }
   .section-label .dot{ width:6px;height:6px;border-radius:50%; background:var(--coral); }
+
+  .tab-btn{
+    font-family: var(--font-body); font-weight:600; font-size:12px;
+    color: var(--teal); background: var(--teal-wash); border: 1px solid transparent;
+    padding: 6px 11px; border-radius: 20px; cursor:pointer;
+  }
+  .tab-btn:hover{ background: var(--teal); color:white; }
+
+  .bareme-panel{
+    background: var(--navy-wash); border-radius: 10px; padding: 12px 14px; margin-bottom: 14px;
+  }
+  .bareme-row{ display:flex; align-items:center; justify-content:space-between; font-size:13px; padding: 4px 0; color: var(--ink); }
+  .bareme-row strong{ font-family: var(--font-mono); color: var(--navy); }
+  .bareme-note{ font-size:11.5px; color: var(--ink-soft); margin: 8px 0 0; }
+
   .field-row{ display:flex; gap:10px; flex-wrap: wrap; }
   .field{ flex:1; min-width: 140px; display:flex; flex-direction:column; gap:6px; }
   label{ font-size:12px; font-weight:600; color: var(--ink-soft); }
@@ -90,7 +114,7 @@
     padding: 10px 12px;
     border-radius: 10px;
     border: 1.5px solid var(--line);
-    background: #FCFDFD;
+    background: #FCFDFF;
     color: var(--ink);
     width:100%;
     transition: border-color 0.15s;
@@ -101,6 +125,7 @@
     box-shadow: 0 0 0 3px var(--teal-wash);
   }
   input[type="number"]{ font-family: var(--font-mono); }
+
   .swap-btn{
     align-self:center;
     width:36px; height:36px; border-radius:10px;
@@ -108,76 +133,87 @@
     background: white;
     display:flex; align-items:center; justify-content:center;
     cursor:pointer; flex-shrink:0;
-    color: var(--teal-deep);
+    color: var(--navy);
     margin-top: 18px;
     transition: background 0.15s, transform 0.15s;
   }
   .swap-btn:hover{ background: var(--teal-wash); transform: rotate(180deg); }
+
   .checkbox-row{
     display:flex; align-items:center; gap:8px; margin-top:12px; font-size:13px; color: var(--ink-soft);
   }
   .checkbox-row input{ width:16px; height:16px; accent-color: var(--teal); }
+
   .btn{
     font-family: var(--font-body); font-weight:600; font-size:14px;
     padding: 11px 16px; border-radius: 10px; border:none; cursor:pointer;
     display:inline-flex; align-items:center; justify-content:center; gap:6px;
-    transition: transform 0.1s, opacity 0.15s;
+    transition: transform 0.1s, opacity 0.15s, background 0.15s;
   }
   .btn:active{ transform: scale(0.98); }
   .btn:disabled{ opacity:0.6; cursor:not-allowed; }
   .btn-primary{ background: var(--teal); color:white; width:100%; margin-top:14px; }
-  .btn-primary:hover{ background: var(--teal-deep); }
-  .btn-ghost{ background: transparent; color: var(--teal-deep); border:1.5px solid var(--line); }
-  .btn-danger-ghost{ background:transparent; color: var(--danger); border: 1.5px solid #F1D4CE; }
+  .btn-primary:hover{ background: var(--navy); }
+  .btn-ghost{ background: transparent; color: var(--navy); border:1.5px solid var(--line); }
+  .btn-ghost:hover{ background: var(--navy-wash); }
+  .btn-danger-ghost{ background:transparent; color: var(--danger); border: 1.5px solid #F1D2C9; }
   .btn-sm{ padding: 7px 10px; font-size:12.5px; }
-  .day-group{ margin-bottom: 18px; }
-  .day-group:last-child{ margin-bottom:0; }
-  .day-header{
-    display:flex; align-items:baseline; justify-content:space-between;
-    margin-bottom: 8px; padding-bottom:6px; border-bottom: 1px dashed var(--line);
+
+  /* Table */
+  .table-wrap{ overflow-x:auto; margin: 0 -2px; }
+  table.trip-table{ width:100%; border-collapse: collapse; font-size: 12.5px; min-width: 560px; }
+  .trip-table th, .trip-table td{
+    border: 1px solid var(--line); padding: 8px 9px; text-align:left; vertical-align: middle;
   }
-  .day-header .day-date{ font-family: var(--font-display); font-weight:600; font-size:14px; color: var(--ink); text-transform:capitalize; }
-  .day-header .day-total{ font-family: var(--font-mono); font-weight:600; font-size:13px; color: var(--teal-deep); background: var(--teal-wash); padding: 2px 9px; border-radius: 20px; }
-  .leg{
-    display:flex; gap:10px; align-items:flex-start;
-    padding: 9px 0;
-    position: relative;
+  .trip-table thead th{
+    background: var(--navy-wash); color: var(--navy);
+    font-family: var(--font-display); font-weight:600; font-size: 11px;
+    text-transform: uppercase; letter-spacing: 0.03em;
   }
-  .leg-track{
-    display:flex; flex-direction:column; align-items:center; width:14px; flex-shrink:0; padding-top:4px;
-  }
-  .leg-dot{ width:8px; height:8px; border-radius:50%; background: var(--coral); flex-shrink:0; }
-  .leg-line{ width:1.5px; flex:1; background: repeating-linear-gradient(to bottom, var(--line) 0 4px, transparent 4px 8px); margin-top:2px; min-height: 22px; }
-  .leg:last-child .leg-line{ display:none; }
-  .leg-body{ flex:1; min-width:0; }
-  .leg-addrs{ font-size:13px; line-height:1.5; }
-  .leg-addrs .a1{ color: var(--ink); }
-  .leg-addrs .arrow{ color: var(--ink-soft); margin: 0 4px; }
-  .leg-addrs .a2{ color: var(--ink); }
-  .leg-meta{ display:flex; align-items:center; gap:8px; margin-top:4px; }
-  .leg-km{ font-family: var(--font-mono); font-size:12.5px; font-weight:600; color: var(--teal-deep); }
+  .trip-table td.cell-date{ font-weight:600; white-space:nowrap; color: var(--ink); }
+  .trip-table td.cell-km{ font-family: var(--font-mono); color: var(--teal); font-weight:600; white-space:nowrap; }
+  .trip-table td.cell-total{ font-family: var(--font-mono); font-weight:700; color: var(--navy); white-space:nowrap; background: var(--teal-wash); }
+  .trip-table td.cell-forfait{ font-family: var(--font-mono); font-weight:700; color: var(--coral); white-space:nowrap; background: var(--coral-wash); }
+  .trip-table td.cell-del{ text-align:center; padding: 4px; }
   .leg-del{
     background:none; border:none; cursor:pointer; color: var(--ink-soft);
-    font-size:11.5px; padding:2px 6px; border-radius: 6px;
+    font-size:13px; padding:4px 7px; border-radius: 6px; line-height:1;
   }
   .leg-del:hover{ color: var(--danger); background: #FBEAE6; }
+  tr.total-row td{
+    background: var(--navy); color:white; font-family: var(--font-display); font-weight:600;
+    font-size: 12px; text-transform:uppercase; letter-spacing:0.03em;
+  }
+  tr.total-row td.cell-km, tr.total-row td.cell-forfait{ background: var(--navy); color:white; }
+  .direction-tag{
+    display:inline-block; margin-left:8px; font-size:10px; font-weight:600; text-transform:none;
+    letter-spacing:0; color: rgba(255,255,255,0.75); font-family: var(--font-body);
+  }
+
   .empty-state{
     text-align:center; padding: 26px 12px; color: var(--ink-soft); font-size:13.5px;
   }
   .empty-state .icon{ font-size: 26px; margin-bottom:8px; }
+
+  /* Sticky total bar */
   .total-bar{
     position: sticky; bottom: 0; left:0; right:0;
     background: var(--surface);
     border-top: 1px solid var(--line);
     padding: 12px 20px;
-    display:flex; align-items:center; justify-content:space-between;
-    box-shadow: 0 -6px 18px -10px rgba(20,50,45,0.25);
+    display:flex; align-items:center; justify-content:space-between; gap: 14px;
+    box-shadow: 0 -6px 18px -10px rgba(27,42,107,0.28);
     z-index: 5;
   }
-  .total-bar .label{ font-size:12px; color: var(--ink-soft); font-weight:600; text-transform:uppercase; letter-spacing:0.04em; }
-  .total-bar .value{ font-family: var(--font-mono); font-size: 22px; font-weight:600; color: var(--teal-deep); }
+  .tb-group{ display:flex; flex-direction:column; align-items:flex-start; }
+  .tb-group.right{ align-items:flex-end; }
+  .total-bar .label{ font-size:11px; color: var(--ink-soft); font-weight:600; text-transform:uppercase; letter-spacing:0.04em; }
+  .total-bar .value{ font-family: var(--font-mono); font-size: 20px; font-weight:600; color: var(--navy); }
+  .total-bar .value.coral{ color: var(--coral); }
+
   .toolbar{ display:flex; gap:10px; margin-top: 14px; }
   .toolbar .btn{ flex:1; }
+
   .toast{
     position: fixed; top: 14px; left:50%; transform: translateX(-50%);
     background: var(--ink); color:white; font-size:13px; padding: 9px 16px;
@@ -185,11 +221,14 @@
     z-index: 50; white-space:nowrap;
   }
   .toast.show{ opacity:1; transform: translateX(-50%) translateY(4px); }
+
   .loading-row{ text-align:center; padding: 20px; color: var(--ink-soft); font-size:13px; }
+
   @media print{
     .hero, .toolbar, .swap-btn, .leg-del, .no-print, .btn-primary, .checkbox-row, .total-bar{ display:none !important; }
     .card{ box-shadow:none; margin: 0 0 12px; border:1px solid #ccc; }
     body{ background:white; }
+    tr.total-row td{ background:#eee !important; color:#000 !important; }
   }
 </style>
 </head>
@@ -205,7 +244,7 @@
       </div>
     </div>
     <h1>Frais kilométriques</h1>
-    <p>1er lieu d'intervention / dernier lieu d'intervention — domicile. Enregistrez vos trajets, le total se calcule tout seul.</p>
+    <p>1er lieu d'intervention / dernier lieu d'intervention — domicile. Enregistrez vos trajets, le total et le forfait se calculent tout seuls.</p>
   </div>
 
   <div class="card">
@@ -259,13 +298,49 @@
   </div>
 
   <div class="card">
-    <div class="section-label"><span class="dot"></span>Trajets du mois</div>
+    <div class="section-header-row">
+      <div class="section-label"><span class="dot"></span>Trajets du mois</div>
+      <button class="tab-btn no-print" id="btn-bareme" type="button">ℹ️ Barème de remboursement</button>
+    </div>
+
+    <div id="bareme-panel" class="bareme-panel no-print" style="display:none;">
+      <div class="bareme-row"><span>Moins de 20,99 km / jour</span><strong>2 €</strong></div>
+      <div class="bareme-row"><span>Entre 21 et 40,99 km / jour</span><strong>4 €</strong></div>
+      <div class="bareme-row"><span>Au-delà de 41 km / jour</span><strong>6 €</strong></div>
+      <p class="bareme-note">Le forfait est calculé automatiquement par journée, sur la base du total de km parcourus ce jour-là.</p>
+    </div>
+
     <div id="loading" class="loading-row">Chargement de vos trajets…</div>
-    <div id="trip-list"></div>
+
+    <div id="table-wrap" class="table-wrap" style="display:none;">
+      <table class="trip-table">
+        <thead>
+          <tr>
+            <th>Date</th>
+            <th>Adresse de départ</th>
+            <th>Adresse arrivée</th>
+            <th>Km</th>
+            <th>Total jour</th>
+            <th>Forfait jour</th>
+            <th class="no-print"></th>
+          </tr>
+        </thead>
+        <tbody id="trip-table-body"></tbody>
+        <tfoot>
+          <tr class="total-row">
+            <td colspan="3">Total du mois<span class="direction-tag">réservé à la direction</span></td>
+            <td class="cell-km"><span id="month-km-total">0 km</span></td>
+            <td class="cell-forfait" colspan="2"><span id="month-forfait-total">0 €</span></td>
+          </tr>
+        </tfoot>
+      </table>
+    </div>
+
     <div id="empty" class="empty-state" style="display:none;">
       <div class="icon">🚗</div>
       Aucun trajet enregistré pour ce mois pour l'instant.
     </div>
+
     <div class="toolbar no-print">
       <button class="btn btn-ghost btn-sm" id="btn-print">🖨️ Imprimer</button>
       <button class="btn btn-ghost btn-sm" id="btn-csv">⬇️ Exporter CSV</button>
@@ -276,8 +351,14 @@
 </div>
 
 <div class="total-bar no-print">
-  <span class="label">Total du mois</span>
-  <span class="value" id="month-total">0 km</span>
+  <div class="tb-group">
+    <span class="label">Total km</span>
+    <span class="value" id="month-total">0 km</span>
+  </div>
+  <div class="tb-group right">
+    <span class="label">Total forfait</span>
+    <span class="value coral" id="month-total-forfait">0 €</span>
+  </div>
 </div>
 
 <div class="toast" id="toast"></div>
@@ -289,8 +370,12 @@
     salarie: $('salarie'), mois: $('mois'), domicile: $('domicile'),
     fDate: $('f-date'), fKm: $('f-km'), fDepart: $('f-depart'), fArrivee: $('f-arrivee'), fRetour: $('f-retour'),
     btnAdd: $('btn-add'), btnSwap: $('btn-swap'),
-    tripList: $('trip-list'), loading: $('loading'), empty: $('empty'),
-    monthTotal: $('month-total'), toast: $('toast'),
+    btnBareme: $('btn-bareme'), baremePanel: $('bareme-panel'),
+    tableWrap: $('table-wrap'), tripTableBody: $('trip-table-body'),
+    loading: $('loading'), empty: $('empty'),
+    monthTotal: $('month-total'), monthTotalForfait: $('month-total-forfait'),
+    monthKmTotal: $('month-km-total'), monthForfaitTotal: $('month-forfait-total'),
+    toast: $('toast'),
     btnPrint: $('btn-print'), btnCsv: $('btn-csv'), btnReset: $('btn-reset')
   };
 
@@ -312,6 +397,9 @@
   function fmtKm(n){
     return (Math.round(n*10)/10).toString().replace('.', ',') + ' km';
   }
+  function fmtEuro(n){
+    return (Math.round(n*100)/100).toString().replace('.', ',') + ' €';
+  }
   function escapeHtml(str){
     const d = document.createElement('div');
     d.textContent = str || '';
@@ -322,6 +410,11 @@
   }
   function currentMois(){
     return els.mois.value || todayMonth();
+  }
+  function calcForfait(km){
+    if(km <= 20.99) return 2;
+    if(km <= 40.99) return 4;
+    return 6;
   }
 
   async function loadDomicile(){
@@ -357,7 +450,7 @@
       return;
     }
     els.loading.style.display = 'block';
-    els.tripList.innerHTML = '';
+    els.tableWrap.style.display = 'none';
     els.empty.style.display = 'none';
     try{
       const res = await fetch('/api/trajets?salarie=' + encodeURIComponent(salarie) + '&mois=' + encodeURIComponent(currentMois()));
@@ -379,43 +472,51 @@
     });
     const dates = Object.keys(byDate).sort();
 
+    let monthKm = 0;
+    let monthForfait = 0;
+
     if(dates.length === 0){
-      els.tripList.innerHTML = '';
+      els.tripTableBody.innerHTML = '';
+      els.tableWrap.style.display = 'none';
       els.empty.style.display = 'block';
     } else {
       els.empty.style.display = 'none';
-      els.tripList.innerHTML = dates.map(date => {
+      els.tableWrap.style.display = 'block';
+      let rowsHtml = '';
+      dates.forEach(date => {
         const legs = byDate[date];
-        const dayTotal = legs.reduce((s,l)=> s + Number(l.km||0), 0);
-        const dateLabel = new Date(date + 'T00:00:00').toLocaleDateString('fr-FR', { weekday:'short', day:'2-digit', month:'short' });
-        const legsHtml = legs.map(leg => `
-          <div class="leg">
-            <div class="leg-track"><div class="leg-dot"></div><div class="leg-line"></div></div>
-            <div class="leg-body">
-              <div class="leg-addrs"><span class="a1">${escapeHtml(leg.depart)}</span><span class="arrow">→</span><span class="a2">${escapeHtml(leg.arrivee)}</span></div>
-              <div class="leg-meta">
-                <span class="leg-km">${fmtKm(Number(leg.km||0))}</span>
-                <button class="leg-del no-print" data-id="${leg.id}">supprimer</button>
-              </div>
-            </div>
-          </div>
-        `).join('');
-        return `
-          <div class="day-group">
-            <div class="day-header">
-              <span class="day-date">${dateLabel}</span>
-              <span class="day-total">${fmtKm(dayTotal)}</span>
-            </div>
-            ${legsHtml}
-          </div>
-        `;
-      }).join('');
+        const dayKm = legs.reduce((s,l)=> s + Number(l.km||0), 0);
+        const dayForfait = calcForfait(dayKm);
+        monthKm += dayKm;
+        monthForfait += dayForfait;
+        const dateLabel = new Date(date + 'T00:00:00').toLocaleDateString('fr-FR', { day:'2-digit', month:'2-digit', year:'numeric' });
+        legs.forEach((leg, i) => {
+          rowsHtml += '<tr>';
+          if(i === 0){
+            rowsHtml += `<td class="cell-date" rowspan="${legs.length}">${dateLabel}</td>`;
+          }
+          rowsHtml += `
+            <td>${escapeHtml(leg.depart)}</td>
+            <td>${escapeHtml(leg.arrivee)}</td>
+            <td class="cell-km">${fmtKm(Number(leg.km||0))}</td>
+          `;
+          if(i === 0){
+            rowsHtml += `<td class="cell-total" rowspan="${legs.length}">${fmtKm(dayKm)}</td>`;
+            rowsHtml += `<td class="cell-forfait" rowspan="${legs.length}">${dayForfait} €</td>`;
+          }
+          rowsHtml += `<td class="cell-del no-print"><button class="leg-del" data-id="${leg.id}" title="Supprimer">✕</button></td>`;
+          rowsHtml += '</tr>';
+        });
+      });
+      els.tripTableBody.innerHTML = rowsHtml;
     }
 
-    const monthTotal = entries.reduce((s,e)=> s + Number(e.km||0), 0);
-    els.monthTotal.textContent = fmtKm(monthTotal);
+    els.monthKmTotal.textContent = fmtKm(monthKm);
+    els.monthForfaitTotal.textContent = fmtEuro(monthForfait);
+    els.monthTotal.textContent = fmtKm(monthKm);
+    els.monthTotalForfait.textContent = fmtEuro(monthForfait);
 
-    els.tripList.querySelectorAll('.leg-del').forEach(btn => {
+    els.tripTableBody.querySelectorAll('.leg-del').forEach(btn => {
       btn.addEventListener('click', async () => {
         const id = btn.dataset.id;
         entries = entries.filter(e => e.id !== id);
@@ -456,6 +557,7 @@
       showToast('Trajet ajouté ✓');
       els.fKm.value = '';
       els.fArrivee.value = '';
+      els.fKm.focus();
     }catch(e){
       showToast("Échec de l'enregistrement, réessayez");
     }
@@ -470,9 +572,20 @@
 
   function exportCsv(){
     if(entries.length === 0){ showToast('Aucun trajet à exporter'); return; }
-    const rows = [['Date','Adresse de départ','Adresse arrivée','Nombre Km']];
-    entries.slice().sort((a,b)=> a.date.localeCompare(b.date)).forEach(e => {
-      rows.push([e.date, e.depart, e.arrivee, String(e.km).replace('.', ',')]);
+    const byDate = {};
+    entries.forEach(e => { if(!byDate[e.date]) byDate[e.date] = []; byDate[e.date].push(e); });
+    const rows = [['Date','Adresse de départ','Adresse arrivée','Nombre Km','Total jour (km)','Forfait jour (€)']];
+    Object.keys(byDate).sort().forEach(date => {
+      const legs = byDate[date];
+      const dayKm = legs.reduce((s,l)=> s + Number(l.km||0), 0);
+      const dayForfait = calcForfait(dayKm);
+      legs.forEach((e, i) => {
+        rows.push([
+          e.date, e.depart, e.arrivee, String(e.km).replace('.', ','),
+          i === 0 ? String(Math.round(dayKm*10)/10).replace('.', ',') : '',
+          i === 0 ? String(dayForfait) : ''
+        ]);
+      });
     });
     const csv = rows.map(r => r.map(c => '"' + String(c).replace(/"/g,'""') + '"').join(';')).join('\n');
     const blob = new Blob(['\ufeff' + csv], { type: 'text/csv;charset=utf-8;' });
@@ -506,6 +619,10 @@
   els.btnPrint.addEventListener('click', () => window.print());
   els.btnCsv.addEventListener('click', exportCsv);
   els.btnReset.addEventListener('click', resetMonth);
+  els.btnBareme.addEventListener('click', () => {
+    const showing = els.baremePanel.style.display !== 'none';
+    els.baremePanel.style.display = showing ? 'none' : 'block';
+  });
   els.salarie.addEventListener('change', async () => {
     localStorage.setItem(LAST_SALARIE_KEY, currentSalarie());
     await loadDomicile();
