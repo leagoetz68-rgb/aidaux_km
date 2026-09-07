@@ -144,6 +144,16 @@
   }
   .checkbox-row input{ width:16px; height:16px; accent-color: var(--teal); }
 
+  .leg-block{
+    background: #FAFBFF; border: 1.5px dashed var(--line); border-radius: 12px;
+    padding: 12px; margin-top: 10px;
+  }
+  .leg-block-title{
+    font-family: var(--font-display); font-weight:600; font-size:12px;
+    color: var(--navy); text-transform:uppercase; letter-spacing:0.04em; margin-bottom:10px;
+    display:flex; align-items:center;
+  }
+
   .btn{
     font-family: var(--font-body); font-weight:600; font-size:14px;
     padding: 11px 16px; border-radius: 10px; border:none; cursor:pointer;
@@ -270,30 +280,61 @@
   <div class="card">
     <div class="section-label"><span class="dot"></span>Ajouter un trajet</div>
     <div class="field-row">
-      <div class="field" style="max-width:150px;">
+      <div class="field" style="max-width:170px;">
         <label for="f-date">Date</label>
         <input type="date" id="f-date">
       </div>
-      <div class="field">
-        <label for="f-km">Nombre de km</label>
-        <input type="number" id="f-km" step="0.1" min="0" placeholder="ex. 4,2">
+    </div>
+
+    <div class="leg-block">
+      <div class="leg-block-title">Aller</div>
+      <div class="field-row" style="align-items:flex-end;">
+        <div class="field">
+          <label for="f-depart">Adresse de départ</label>
+          <input type="text" id="f-depart" placeholder="Adresse de départ">
+        </div>
+        <button class="swap-btn" id="btn-swap" type="button" title="Inverser départ / arrivée">⇅</button>
+        <div class="field">
+          <label for="f-arrivee">Adresse d'arrivée</label>
+          <input type="text" id="f-arrivee" placeholder="Adresse d'arrivée">
+        </div>
+      </div>
+      <div class="field-row" style="margin-top:10px;">
+        <div class="field" style="max-width:150px;">
+          <label for="f-km">Nombre de km (aller)</label>
+          <input type="number" id="f-km" step="0.1" min="0" placeholder="ex. 4,2">
+        </div>
       </div>
     </div>
-    <div class="field-row" style="margin-top:10px; align-items:flex-end;">
-      <div class="field">
-        <label for="f-depart">Adresse de départ</label>
-        <input type="text" id="f-depart" placeholder="Adresse de départ">
-      </div>
-      <button class="swap-btn" id="btn-swap" type="button" title="Inverser départ / arrivée">⇅</button>
-      <div class="field">
-        <label for="f-arrivee">Adresse d'arrivée</label>
-        <input type="text" id="f-arrivee" placeholder="Adresse d'arrivée">
-      </div>
-    </div>
+
     <label class="checkbox-row">
-      <input type="checkbox" id="f-retour" checked>
-      Ajouter aussi le trajet retour (mêmes adresses inversées, même distance)
+      <input type="checkbox" id="f-has-retour" checked>
+      Ajouter aussi un trajet retour
     </label>
+
+    <div class="leg-block" id="retour-block">
+      <div class="leg-block-title">
+        Retour
+        <button class="tab-btn" id="btn-copy-retour" type="button" style="margin-left:8px;">↺ Reprendre l'aller inversé</button>
+      </div>
+      <div class="field-row" style="align-items:flex-end;">
+        <div class="field">
+          <label for="f-retour-depart">Adresse de départ (retour)</label>
+          <input type="text" id="f-retour-depart" placeholder="Adresse de départ">
+        </div>
+        <div class="field">
+          <label for="f-retour-arrivee">Adresse d'arrivée (retour)</label>
+          <input type="text" id="f-retour-arrivee" placeholder="Adresse d'arrivée">
+        </div>
+      </div>
+      <div class="field-row" style="margin-top:10px;">
+        <div class="field" style="max-width:150px;">
+          <label for="f-retour-km">Nombre de km (retour)</label>
+          <input type="number" id="f-retour-km" step="0.1" min="0" placeholder="ex. 4,2">
+        </div>
+      </div>
+    </div>
+
     <button class="btn btn-primary" id="btn-add">+ Ajouter le trajet</button>
   </div>
 
@@ -368,7 +409,10 @@
   const $ = (id) => document.getElementById(id);
   const els = {
     salarie: $('salarie'), mois: $('mois'), domicile: $('domicile'),
-    fDate: $('f-date'), fKm: $('f-km'), fDepart: $('f-depart'), fArrivee: $('f-arrivee'), fRetour: $('f-retour'),
+    fDate: $('f-date'), fKm: $('f-km'), fDepart: $('f-depart'), fArrivee: $('f-arrivee'),
+    fHasRetour: $('f-has-retour'), retourBlock: $('retour-block'),
+    fRetourDepart: $('f-retour-depart'), fRetourArrivee: $('f-retour-arrivee'), fRetourKm: $('f-retour-km'),
+    btnCopyRetour: $('btn-copy-retour'),
     btnAdd: $('btn-add'), btnSwap: $('btn-swap'),
     btnBareme: $('btn-bareme'), baremePanel: $('bareme-panel'),
     tableWrap: $('table-wrap'), tripTableBody: $('trip-table-body'),
@@ -530,38 +574,64 @@
     });
   }
 
+  async function postLeg(salarie, mois, date, depart, arrivee, km){
+    const res = await fetch('/api/trajets', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ salarie, mois, date, depart, arrivee, km, retour: false })
+    });
+    if(!res.ok) throw new Error('Erreur serveur');
+  }
+
   async function addTrip(){
     const salarie = currentSalarie();
     const date = els.fDate.value;
     const depart = els.fDepart.value.trim();
     const arrivee = els.fArrivee.value.trim();
     const km = parseFloat((els.fKm.value || '').replace(',', '.'));
+    const hasRetour = els.fHasRetour.checked;
+    const rDepart = els.fRetourDepart.value.trim();
+    const rArrivee = els.fRetourArrivee.value.trim();
+    const rKm = parseFloat((els.fRetourKm.value || '').replace(',', '.'));
 
     if(!salarie){ showToast('Merci de renseigner le nom du salarié'); return; }
     if(!date){ showToast('Merci de renseigner une date'); return; }
-    if(!depart || !arrivee){ showToast('Merci de renseigner les deux adresses'); return; }
-    if(isNaN(km) || km <= 0){ showToast('Merci de renseigner un nombre de km valide'); return; }
+    if(!depart || !arrivee){ showToast('Merci de renseigner les deux adresses de l\'aller'); return; }
+    if(isNaN(km) || km <= 0){ showToast('Merci de renseigner un nombre de km valide pour l\'aller'); return; }
+    if(hasRetour){
+      if(!rDepart || !rArrivee){ showToast('Merci de renseigner les deux adresses du retour'); return; }
+      if(isNaN(rKm) || rKm <= 0){ showToast('Merci de renseigner un nombre de km valide pour le retour'); return; }
+    }
 
     els.btnAdd.disabled = true;
     try{
-      const res = await fetch('/api/trajets', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          salarie, mois: currentMois(), date, depart, arrivee, km,
-          retour: els.fRetour.checked
-        })
-      });
-      if(!res.ok) throw new Error('Erreur serveur');
+      const mois = currentMois();
+      await postLeg(salarie, mois, date, depart, arrivee, km);
+      if(hasRetour){
+        await postLeg(salarie, mois, date, rDepart, rArrivee, rKm);
+      }
       await loadEntries();
       showToast('Trajet ajouté ✓');
       els.fKm.value = '';
       els.fArrivee.value = '';
+      els.fRetourKm.value = '';
+      els.fRetourArrivee.value = '';
+      els.fRetourDepart.value = '';
       els.fKm.focus();
     }catch(e){
       showToast("Échec de l'enregistrement, réessayez");
     }
     els.btnAdd.disabled = false;
+  }
+
+  function toggleRetourBlock(){
+    els.retourBlock.style.display = els.fHasRetour.checked ? 'block' : 'none';
+  }
+
+  function copyRetourFromAller(){
+    els.fRetourDepart.value = els.fArrivee.value;
+    els.fRetourArrivee.value = els.fDepart.value;
+    els.fRetourKm.value = els.fKm.value;
   }
 
   function swapAddresses(){
@@ -616,6 +686,8 @@
 
   els.btnAdd.addEventListener('click', addTrip);
   els.btnSwap.addEventListener('click', swapAddresses);
+  els.fHasRetour.addEventListener('change', toggleRetourBlock);
+  els.btnCopyRetour.addEventListener('click', copyRetourFromAller);
   els.btnPrint.addEventListener('click', () => window.print());
   els.btnCsv.addEventListener('click', exportCsv);
   els.btnReset.addEventListener('click', resetMonth);
@@ -636,6 +708,7 @@
   els.mois.addEventListener('change', loadEntries);
 
   (async function init(){
+    toggleRetourBlock();
     if(!els.mois.value) els.mois.value = todayMonth();
     if(!els.fDate.value) els.fDate.value = todayISO();
     const lastSalarie = localStorage.getItem(LAST_SALARIE_KEY);
