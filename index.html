@@ -1,0 +1,533 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Frais Kilométriques — AID'Aux</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;600;700&family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@500;600&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --bg: #F5F7F6;
+    --surface: #FFFFFF;
+    --ink: #16302C;
+    --ink-soft: #587068;
+    --teal: #1E8F84;
+    --teal-deep: #14615A;
+    --teal-wash: #E4F1EF;
+    --coral: #F0904E;
+    --coral-wash: #FCE9D9;
+    --line: #DCE6E3;
+    --danger: #C6533F;
+    --radius: 14px;
+    --shadow: 0 1px 2px rgba(20,50,45,0.06), 0 8px 24px -12px rgba(20,50,45,0.18);
+    --font-display: 'Space Grotesk', sans-serif;
+    --font-body: 'IBM Plex Sans', sans-serif;
+    --font-mono: 'IBM Plex Mono', monospace;
+  }
+  *{box-sizing:border-box;}
+  body{
+    margin:0;
+    font-family: var(--font-body);
+    background: var(--bg);
+    color: var(--ink);
+    -webkit-font-smoothing: antialiased;
+  }
+  .app{ max-width: 720px; margin: 0 auto; padding: 0 0 96px; }
+  .hero{
+    background: linear-gradient(155deg, var(--teal-deep), var(--teal) 65%);
+    color: white;
+    padding: 28px 20px 34px;
+    border-radius: 0 0 22px 22px;
+    position: relative;
+    overflow: hidden;
+  }
+  .hero::after{
+    content:"";
+    position:absolute; right:-40px; top:-40px; width:180px; height:180px;
+    border-radius:50%;
+    background: radial-gradient(circle, rgba(240,144,78,0.35), transparent 70%);
+  }
+  .brand{ display:flex; align-items:center; gap:10px; margin-bottom: 18px; }
+  .brand-mark{
+    width:34px; height:34px; border-radius:10px;
+    background: var(--coral);
+    display:flex; align-items:center; justify-content:center;
+    font-family: var(--font-display); font-weight:700; color:white; font-size:16px;
+    flex-shrink:0;
+  }
+  .brand-name{ font-family: var(--font-display); font-weight:600; font-size:15px; letter-spacing:0.02em; opacity:0.95; }
+  .brand-sub{ font-size:11px; opacity:0.75; margin-top:1px; }
+  h1{
+    font-family: var(--font-display); font-weight:700; font-size: 22px;
+    margin: 0 0 4px; letter-spacing: -0.01em;
+  }
+  .hero p{ margin:0; font-size:13px; opacity:0.85; max-width: 46ch; }
+  .card{
+    background: var(--surface);
+    border-radius: var(--radius);
+    box-shadow: var(--shadow);
+    padding: 18px;
+    margin: -22px 16px 16px;
+    position: relative;
+    z-index: 2;
+  }
+  .card + .card{ margin-top: 16px; }
+  .section-label{
+    font-family: var(--font-display); font-weight:600; font-size: 13px;
+    color: var(--teal-deep); text-transform: uppercase; letter-spacing: 0.06em;
+    margin: 0 0 12px;
+    display:flex; align-items:center; gap:8px;
+  }
+  .section-label .dot{ width:6px;height:6px;border-radius:50%; background:var(--coral); }
+  .field-row{ display:flex; gap:10px; flex-wrap: wrap; }
+  .field{ flex:1; min-width: 140px; display:flex; flex-direction:column; gap:6px; }
+  label{ font-size:12px; font-weight:600; color: var(--ink-soft); }
+  input, select{
+    font-family: var(--font-body);
+    font-size: 14px;
+    padding: 10px 12px;
+    border-radius: 10px;
+    border: 1.5px solid var(--line);
+    background: #FCFDFD;
+    color: var(--ink);
+    width:100%;
+    transition: border-color 0.15s;
+  }
+  input:focus, select:focus{
+    outline: none;
+    border-color: var(--teal);
+    box-shadow: 0 0 0 3px var(--teal-wash);
+  }
+  input[type="number"]{ font-family: var(--font-mono); }
+  .swap-btn{
+    align-self:center;
+    width:36px; height:36px; border-radius:10px;
+    border: 1.5px solid var(--line);
+    background: white;
+    display:flex; align-items:center; justify-content:center;
+    cursor:pointer; flex-shrink:0;
+    color: var(--teal-deep);
+    margin-top: 18px;
+    transition: background 0.15s, transform 0.15s;
+  }
+  .swap-btn:hover{ background: var(--teal-wash); transform: rotate(180deg); }
+  .checkbox-row{
+    display:flex; align-items:center; gap:8px; margin-top:12px; font-size:13px; color: var(--ink-soft);
+  }
+  .checkbox-row input{ width:16px; height:16px; accent-color: var(--teal); }
+  .btn{
+    font-family: var(--font-body); font-weight:600; font-size:14px;
+    padding: 11px 16px; border-radius: 10px; border:none; cursor:pointer;
+    display:inline-flex; align-items:center; justify-content:center; gap:6px;
+    transition: transform 0.1s, opacity 0.15s;
+  }
+  .btn:active{ transform: scale(0.98); }
+  .btn:disabled{ opacity:0.6; cursor:not-allowed; }
+  .btn-primary{ background: var(--teal); color:white; width:100%; margin-top:14px; }
+  .btn-primary:hover{ background: var(--teal-deep); }
+  .btn-ghost{ background: transparent; color: var(--teal-deep); border:1.5px solid var(--line); }
+  .btn-danger-ghost{ background:transparent; color: var(--danger); border: 1.5px solid #F1D4CE; }
+  .btn-sm{ padding: 7px 10px; font-size:12.5px; }
+  .day-group{ margin-bottom: 18px; }
+  .day-group:last-child{ margin-bottom:0; }
+  .day-header{
+    display:flex; align-items:baseline; justify-content:space-between;
+    margin-bottom: 8px; padding-bottom:6px; border-bottom: 1px dashed var(--line);
+  }
+  .day-header .day-date{ font-family: var(--font-display); font-weight:600; font-size:14px; color: var(--ink); text-transform:capitalize; }
+  .day-header .day-total{ font-family: var(--font-mono); font-weight:600; font-size:13px; color: var(--teal-deep); background: var(--teal-wash); padding: 2px 9px; border-radius: 20px; }
+  .leg{
+    display:flex; gap:10px; align-items:flex-start;
+    padding: 9px 0;
+    position: relative;
+  }
+  .leg-track{
+    display:flex; flex-direction:column; align-items:center; width:14px; flex-shrink:0; padding-top:4px;
+  }
+  .leg-dot{ width:8px; height:8px; border-radius:50%; background: var(--coral); flex-shrink:0; }
+  .leg-line{ width:1.5px; flex:1; background: repeating-linear-gradient(to bottom, var(--line) 0 4px, transparent 4px 8px); margin-top:2px; min-height: 22px; }
+  .leg:last-child .leg-line{ display:none; }
+  .leg-body{ flex:1; min-width:0; }
+  .leg-addrs{ font-size:13px; line-height:1.5; }
+  .leg-addrs .a1{ color: var(--ink); }
+  .leg-addrs .arrow{ color: var(--ink-soft); margin: 0 4px; }
+  .leg-addrs .a2{ color: var(--ink); }
+  .leg-meta{ display:flex; align-items:center; gap:8px; margin-top:4px; }
+  .leg-km{ font-family: var(--font-mono); font-size:12.5px; font-weight:600; color: var(--teal-deep); }
+  .leg-del{
+    background:none; border:none; cursor:pointer; color: var(--ink-soft);
+    font-size:11.5px; padding:2px 6px; border-radius: 6px;
+  }
+  .leg-del:hover{ color: var(--danger); background: #FBEAE6; }
+  .empty-state{
+    text-align:center; padding: 26px 12px; color: var(--ink-soft); font-size:13.5px;
+  }
+  .empty-state .icon{ font-size: 26px; margin-bottom:8px; }
+  .total-bar{
+    position: sticky; bottom: 0; left:0; right:0;
+    background: var(--surface);
+    border-top: 1px solid var(--line);
+    padding: 12px 20px;
+    display:flex; align-items:center; justify-content:space-between;
+    box-shadow: 0 -6px 18px -10px rgba(20,50,45,0.25);
+    z-index: 5;
+  }
+  .total-bar .label{ font-size:12px; color: var(--ink-soft); font-weight:600; text-transform:uppercase; letter-spacing:0.04em; }
+  .total-bar .value{ font-family: var(--font-mono); font-size: 22px; font-weight:600; color: var(--teal-deep); }
+  .toolbar{ display:flex; gap:10px; margin-top: 14px; }
+  .toolbar .btn{ flex:1; }
+  .toast{
+    position: fixed; top: 14px; left:50%; transform: translateX(-50%);
+    background: var(--ink); color:white; font-size:13px; padding: 9px 16px;
+    border-radius: 20px; opacity:0; pointer-events:none; transition: opacity 0.25s, transform 0.25s;
+    z-index: 50; white-space:nowrap;
+  }
+  .toast.show{ opacity:1; transform: translateX(-50%) translateY(4px); }
+  .loading-row{ text-align:center; padding: 20px; color: var(--ink-soft); font-size:13px; }
+  @media print{
+    .hero, .toolbar, .swap-btn, .leg-del, .no-print, .btn-primary, .checkbox-row, .total-bar{ display:none !important; }
+    .card{ box-shadow:none; margin: 0 0 12px; border:1px solid #ccc; }
+    body{ background:white; }
+  }
+</style>
+</head>
+<body>
+<div class="app">
+
+  <div class="hero">
+    <div class="brand">
+      <div class="brand-mark">A</div>
+      <div>
+        <div class="brand-name">AID'Aux</div>
+        <div class="brand-sub">Services d'aide à la personne</div>
+      </div>
+    </div>
+    <h1>Frais kilométriques</h1>
+    <p>1er lieu d'intervention / dernier lieu d'intervention — domicile. Enregistrez vos trajets, le total se calcule tout seul.</p>
+  </div>
+
+  <div class="card">
+    <div class="section-label"><span class="dot"></span>Informations</div>
+    <div class="field-row">
+      <div class="field">
+        <label for="salarie">Nom du salarié</label>
+        <input type="text" id="salarie" placeholder="ex. Erdogan">
+      </div>
+      <div class="field">
+        <label for="mois">Mois concerné</label>
+        <input type="month" id="mois">
+      </div>
+    </div>
+    <div class="field-row" style="margin-top:10px;">
+      <div class="field">
+        <label for="domicile">Adresse du domicile (départ habituel)</label>
+        <input type="text" id="domicile" placeholder="ex. 1 rue du canal 67550 Vendenheim">
+      </div>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="section-label"><span class="dot"></span>Ajouter un trajet</div>
+    <div class="field-row">
+      <div class="field" style="max-width:150px;">
+        <label for="f-date">Date</label>
+        <input type="date" id="f-date">
+      </div>
+      <div class="field">
+        <label for="f-km">Nombre de km</label>
+        <input type="number" id="f-km" step="0.1" min="0" placeholder="ex. 4,2">
+      </div>
+    </div>
+    <div class="field-row" style="margin-top:10px; align-items:flex-end;">
+      <div class="field">
+        <label for="f-depart">Adresse de départ</label>
+        <input type="text" id="f-depart" placeholder="Adresse de départ">
+      </div>
+      <button class="swap-btn" id="btn-swap" type="button" title="Inverser départ / arrivée">⇅</button>
+      <div class="field">
+        <label for="f-arrivee">Adresse d'arrivée</label>
+        <input type="text" id="f-arrivee" placeholder="Adresse d'arrivée">
+      </div>
+    </div>
+    <label class="checkbox-row">
+      <input type="checkbox" id="f-retour" checked>
+      Ajouter aussi le trajet retour (mêmes adresses inversées, même distance)
+    </label>
+    <button class="btn btn-primary" id="btn-add">+ Ajouter le trajet</button>
+  </div>
+
+  <div class="card">
+    <div class="section-label"><span class="dot"></span>Trajets du mois</div>
+    <div id="loading" class="loading-row">Chargement de vos trajets…</div>
+    <div id="trip-list"></div>
+    <div id="empty" class="empty-state" style="display:none;">
+      <div class="icon">🚗</div>
+      Aucun trajet enregistré pour ce mois pour l'instant.
+    </div>
+    <div class="toolbar no-print">
+      <button class="btn btn-ghost btn-sm" id="btn-print">🖨️ Imprimer</button>
+      <button class="btn btn-ghost btn-sm" id="btn-csv">⬇️ Exporter CSV</button>
+      <button class="btn btn-danger-ghost btn-sm" id="btn-reset">Effacer le mois</button>
+    </div>
+  </div>
+
+</div>
+
+<div class="total-bar no-print">
+  <span class="label">Total du mois</span>
+  <span class="value" id="month-total">0 km</span>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+(function(){
+  const $ = (id) => document.getElementById(id);
+  const els = {
+    salarie: $('salarie'), mois: $('mois'), domicile: $('domicile'),
+    fDate: $('f-date'), fKm: $('f-km'), fDepart: $('f-depart'), fArrivee: $('f-arrivee'), fRetour: $('f-retour'),
+    btnAdd: $('btn-add'), btnSwap: $('btn-swap'),
+    tripList: $('trip-list'), loading: $('loading'), empty: $('empty'),
+    monthTotal: $('month-total'), toast: $('toast'),
+    btnPrint: $('btn-print'), btnCsv: $('btn-csv'), btnReset: $('btn-reset')
+  };
+
+  let entries = [];
+  const LAST_SALARIE_KEY = 'fraisKm:lastSalarie';
+
+  function todayMonth(){
+    const d = new Date();
+    return d.getFullYear() + '-' + String(d.getMonth()+1).padStart(2,'0');
+  }
+  function todayISO(){
+    return new Date().toISOString().slice(0,10);
+  }
+  function showToast(msg){
+    els.toast.textContent = msg;
+    els.toast.classList.add('show');
+    setTimeout(()=> els.toast.classList.remove('show'), 1800);
+  }
+  function fmtKm(n){
+    return (Math.round(n*10)/10).toString().replace('.', ',') + ' km';
+  }
+  function escapeHtml(str){
+    const d = document.createElement('div');
+    d.textContent = str || '';
+    return d.innerHTML;
+  }
+  function currentSalarie(){
+    return (els.salarie.value || '').trim();
+  }
+  function currentMois(){
+    return els.mois.value || todayMonth();
+  }
+
+  async function loadDomicile(){
+    const salarie = currentSalarie();
+    if(!salarie) return;
+    try{
+      const res = await fetch('/api/settings?salarie=' + encodeURIComponent(salarie));
+      const data = await res.json();
+      if(data && data.domicile !== undefined){
+        els.domicile.value = data.domicile || '';
+      }
+    }catch(e){ /* pas de réglages pour ce salarié */ }
+  }
+
+  async function saveDomicile(){
+    const salarie = currentSalarie();
+    if(!salarie) return;
+    try{
+      await fetch('/api/settings', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ salarie, domicile: els.domicile.value.trim() })
+      });
+    }catch(e){ console.error('Erreur sauvegarde réglages', e); }
+  }
+
+  async function loadEntries(){
+    const salarie = currentSalarie();
+    if(!salarie){
+      entries = [];
+      els.loading.style.display = 'none';
+      render();
+      return;
+    }
+    els.loading.style.display = 'block';
+    els.tripList.innerHTML = '';
+    els.empty.style.display = 'none';
+    try{
+      const res = await fetch('/api/trajets?salarie=' + encodeURIComponent(salarie) + '&mois=' + encodeURIComponent(currentMois()));
+      if(!res.ok) throw new Error('Erreur serveur');
+      entries = await res.json();
+    }catch(e){
+      entries = [];
+      showToast('Impossible de charger les trajets');
+    }
+    els.loading.style.display = 'none';
+    render();
+  }
+
+  function render(){
+    const byDate = {};
+    entries.forEach(e => {
+      if(!byDate[e.date]) byDate[e.date] = [];
+      byDate[e.date].push(e);
+    });
+    const dates = Object.keys(byDate).sort();
+
+    if(dates.length === 0){
+      els.tripList.innerHTML = '';
+      els.empty.style.display = 'block';
+    } else {
+      els.empty.style.display = 'none';
+      els.tripList.innerHTML = dates.map(date => {
+        const legs = byDate[date];
+        const dayTotal = legs.reduce((s,l)=> s + Number(l.km||0), 0);
+        const dateLabel = new Date(date + 'T00:00:00').toLocaleDateString('fr-FR', { weekday:'short', day:'2-digit', month:'short' });
+        const legsHtml = legs.map(leg => `
+          <div class="leg">
+            <div class="leg-track"><div class="leg-dot"></div><div class="leg-line"></div></div>
+            <div class="leg-body">
+              <div class="leg-addrs"><span class="a1">${escapeHtml(leg.depart)}</span><span class="arrow">→</span><span class="a2">${escapeHtml(leg.arrivee)}</span></div>
+              <div class="leg-meta">
+                <span class="leg-km">${fmtKm(Number(leg.km||0))}</span>
+                <button class="leg-del no-print" data-id="${leg.id}">supprimer</button>
+              </div>
+            </div>
+          </div>
+        `).join('');
+        return `
+          <div class="day-group">
+            <div class="day-header">
+              <span class="day-date">${dateLabel}</span>
+              <span class="day-total">${fmtKm(dayTotal)}</span>
+            </div>
+            ${legsHtml}
+          </div>
+        `;
+      }).join('');
+    }
+
+    const monthTotal = entries.reduce((s,e)=> s + Number(e.km||0), 0);
+    els.monthTotal.textContent = fmtKm(monthTotal);
+
+    els.tripList.querySelectorAll('.leg-del').forEach(btn => {
+      btn.addEventListener('click', async () => {
+        const id = btn.dataset.id;
+        entries = entries.filter(e => e.id !== id);
+        render();
+        try{
+          await fetch('/api/trajets/' + encodeURIComponent(id), { method: 'DELETE' });
+        }catch(e){
+          showToast('Erreur lors de la suppression');
+        }
+      });
+    });
+  }
+
+  async function addTrip(){
+    const salarie = currentSalarie();
+    const date = els.fDate.value;
+    const depart = els.fDepart.value.trim();
+    const arrivee = els.fArrivee.value.trim();
+    const km = parseFloat((els.fKm.value || '').replace(',', '.'));
+
+    if(!salarie){ showToast('Merci de renseigner le nom du salarié'); return; }
+    if(!date){ showToast('Merci de renseigner une date'); return; }
+    if(!depart || !arrivee){ showToast('Merci de renseigner les deux adresses'); return; }
+    if(isNaN(km) || km <= 0){ showToast('Merci de renseigner un nombre de km valide'); return; }
+
+    els.btnAdd.disabled = true;
+    try{
+      const res = await fetch('/api/trajets', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          salarie, mois: currentMois(), date, depart, arrivee, km,
+          retour: els.fRetour.checked
+        })
+      });
+      if(!res.ok) throw new Error('Erreur serveur');
+      await loadEntries();
+      showToast('Trajet ajouté ✓');
+      els.fKm.value = '';
+      els.fArrivee.value = '';
+    }catch(e){
+      showToast("Échec de l'enregistrement, réessayez");
+    }
+    els.btnAdd.disabled = false;
+  }
+
+  function swapAddresses(){
+    const d = els.fDepart.value;
+    els.fDepart.value = els.fArrivee.value;
+    els.fArrivee.value = d;
+  }
+
+  function exportCsv(){
+    if(entries.length === 0){ showToast('Aucun trajet à exporter'); return; }
+    const rows = [['Date','Adresse de départ','Adresse arrivée','Nombre Km']];
+    entries.slice().sort((a,b)=> a.date.localeCompare(b.date)).forEach(e => {
+      rows.push([e.date, e.depart, e.arrivee, String(e.km).replace('.', ',')]);
+    });
+    const csv = rows.map(r => r.map(c => '"' + String(c).replace(/"/g,'""') + '"').join(';')).join('\n');
+    const blob = new Blob(['\ufeff' + csv], { type: 'text/csv;charset=utf-8;' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    const name = (els.salarie.value || 'salarie').trim().replace(/\s+/g,'_') || 'salarie';
+    a.href = url;
+    a.download = `frais_kms_${name}_${els.mois.value || 'mois'}.csv`;
+    document.body.appendChild(a);
+    a.click();
+    a.remove();
+    URL.revokeObjectURL(url);
+  }
+
+  async function resetMonth(){
+    const salarie = currentSalarie();
+    if(!salarie) return;
+    if(!confirm('Effacer tous les trajets enregistrés pour ce mois ? Cette action est irréversible.')) return;
+    try{
+      await fetch('/api/trajets?salarie=' + encodeURIComponent(salarie) + '&mois=' + encodeURIComponent(currentMois()), { method: 'DELETE' });
+      entries = [];
+      render();
+      showToast('Mois réinitialisé');
+    }catch(e){
+      showToast('Erreur lors de la réinitialisation');
+    }
+  }
+
+  els.btnAdd.addEventListener('click', addTrip);
+  els.btnSwap.addEventListener('click', swapAddresses);
+  els.btnPrint.addEventListener('click', () => window.print());
+  els.btnCsv.addEventListener('click', exportCsv);
+  els.btnReset.addEventListener('click', resetMonth);
+  els.salarie.addEventListener('change', async () => {
+    localStorage.setItem(LAST_SALARIE_KEY, currentSalarie());
+    await loadDomicile();
+    if(!els.fDepart.value) els.fDepart.value = els.domicile.value;
+    await loadEntries();
+  });
+  els.domicile.addEventListener('change', async () => {
+    await saveDomicile();
+    if(!els.fDepart.value) els.fDepart.value = els.domicile.value;
+  });
+  els.mois.addEventListener('change', loadEntries);
+
+  (async function init(){
+    if(!els.mois.value) els.mois.value = todayMonth();
+    if(!els.fDate.value) els.fDate.value = todayISO();
+    const lastSalarie = localStorage.getItem(LAST_SALARIE_KEY);
+    if(lastSalarie) els.salarie.value = lastSalarie;
+    await loadDomicile();
+    if(!els.fDepart.value) els.fDepart.value = els.domicile.value;
+    await loadEntries();
+  })();
+})();
+</script>
+</body>
+</html>
