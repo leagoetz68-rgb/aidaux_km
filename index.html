@@ -645,7 +645,7 @@
       const res = await fetch('/api/distance?depart=' + encodeURIComponent(depart) + '&arrivee=' + encodeURIComponent(arrivee));
       const data = await res.json();
       if(res.ok && typeof data.km === 'number'){
-        kmEl.value = String(data.km).replace('.', ',');
+        kmEl.value = String(data.km);
         if(statusEl) statusEl.textContent = `Distance calculée : ${String(data.km).replace('.', ',')} km`;
       } else {
         if(statusEl) statusEl.textContent = (data.error || "Distance non trouvée") + " — renseignez le km manuellement";
