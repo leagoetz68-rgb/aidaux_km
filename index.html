@@ -260,6 +260,16 @@
     <p>1er lieu d'intervention / dernier lieu d'intervention — domicile. Enregistrez vos trajets, le total et le forfait se calculent tout seuls.</p>
   </div>
 
+  <div class="card" id="share-card">
+    <div class="section-label"><span class="dot"></span>Lien à envoyer aux salariés</div>
+    <div class="field-row">
+      <div class="field">
+        <input type="text" id="share-link" readonly>
+      </div>
+      <button class="btn btn-ghost btn-sm" id="btn-copy-link" type="button" style="white-space:nowrap;">📋 Copier le lien</button>
+    </div>
+  </div>
+
   <div class="card">
     <div class="section-label"><span class="dot"></span>Informations</div>
     <div class="field-row">
@@ -429,7 +439,8 @@
     monthTotal: $('month-total'), monthTotalForfait: $('month-total-forfait'),
     monthKmTotal: $('month-km-total'), monthForfaitTotal: $('month-forfait-total'),
     toast: $('toast'),
-    btnPrint: $('btn-print'), btnCsv: $('btn-csv'), btnReset: $('btn-reset')
+    btnPrint: $('btn-print'), btnCsv: $('btn-csv'), btnReset: $('btn-reset'),
+    shareLink: $('share-link'), btnCopyLink: $('btn-copy-link')
   };
 
   let entries = [];
@@ -728,6 +739,12 @@
   els.btnCalcAller.addEventListener('click', () => maybeAutoCalc(els.fDepart, els.fArrivee, els.fKm, els.allerCalcStatus));
   els.btnCalcRetour.addEventListener('click', () => maybeAutoCalc(els.fRetourDepart, els.fRetourArrivee, els.fRetourKm, els.retourCalcStatus));
   els.btnPrint.addEventListener('click', () => window.print());
+  els.btnCopyLink.addEventListener('click', () => {
+    els.shareLink.select();
+    navigator.clipboard.writeText(els.shareLink.value)
+      .then(() => showToast('Lien copié ✓'))
+      .catch(() => showToast('Impossible de copier, sélectionne et copie manuellement'));
+  });
   els.btnCsv.addEventListener('click', exportCsv);
   els.btnReset.addEventListener('click', resetMonth);
   els.btnBareme.addEventListener('click', () => {
@@ -747,6 +764,10 @@
   els.mois.addEventListener('change', loadEntries);
 
   (async function init(){
+    const origin = (window.location.origin && window.location.origin !== 'null')
+      ? window.location.origin
+      : (window.location.protocol + '//' + window.location.host);
+    els.shareLink.value = origin + '/';
     toggleRetourBlock();
     if(!els.mois.value) els.mois.value = todayMonth();
     if(!els.fDate.value) els.fDate.value = todayISO();
