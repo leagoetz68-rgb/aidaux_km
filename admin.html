@@ -70,6 +70,19 @@
   td.km{ color: var(--teal); }
   td.forfait{ color: var(--coral); }
   tr.total td{ background: var(--navy); color:white; font-weight:700; }
+  tr.salarie-row{ cursor:pointer; }
+  tr.salarie-row:hover td{ background: var(--teal-wash); }
+  tr.salarie-row td:first-child{ display:flex; align-items:center; gap:6px; }
+  tr.salarie-row .chevron{ display:inline-block; transition: transform 0.15s; font-size:11px; color: var(--ink-soft); }
+  tr.salarie-row.open .chevron{ transform: rotate(90deg); }
+  tr.detail-row td{ padding:0; border-top:none; }
+  .detail-wrap{ padding:10px 14px 14px; background:#FAFBFF; }
+  table.detail-table{ width:100%; border-collapse:collapse; font-size:12px; margin-top:6px; }
+  table.detail-table th, table.detail-table td{ border:1px solid var(--line); padding:6px 8px; text-align:left; }
+  table.detail-table thead th{ background: var(--navy-wash); color:var(--navy); font-size:10.5px; text-transform:uppercase; }
+  table.detail-table td.cell-total{ background: var(--teal-wash); font-family: var(--font-mono); font-weight:700; color:var(--navy); }
+  table.detail-table td.cell-forfait{ background: var(--coral-wash); font-family: var(--font-mono); font-weight:700; color:var(--coral); }
+  .detail-loading{ font-size:12px; color: var(--ink-soft); padding:8px 0; }
   .empty{ text-align:center; padding:24px; color: var(--ink-soft); font-size:13.5px; }
   .error-box{ background: var(--coral-wash); color:#8a3220; border-radius:10px; padding:10px 14px; font-size:13px; margin-bottom:12px; }
   .login-card{ max-width:360px; margin:60px auto 0; }
@@ -118,6 +131,8 @@
 
   let currentPassword = '';
   let pollTimer = null;
+  let expandedSalarie = null;
+  let lastList = [];
   const SESSION_KEY = 'fraisKm:adminPassword';
 
   function todayMonth(){
@@ -128,6 +143,11 @@
   function fmtKm(n){ return (Math.round(n*10)/10).toString().replace('.', ',') + ' km'; }
   function fmtEuro(n){ return (Math.round(n*100)/100).toString().replace('.', ',') + ' €'; }
   function escapeHtml(str){ const d = document.createElement('div'); d.textContent = str || ''; return d.innerHTML; }
+  function calcForfait(km){
+    if(km <= 20.99) return 2;
+    if(km <= 40.99) return 4;
+    return 6;
+  }
 
   async function fetchSalaries(){
     const mois = els.mois.value || todayMonth();
@@ -149,7 +169,11 @@
         return;
       }
       els.dashError.style.display = 'none';
+      lastList = data;
       render(data);
+      if(expandedSalarie){
+        loadDetail(expandedSalarie);
+      }
     }catch(e){
       els.dashError.style.display = 'block';
       els.dashError.textContent = 'Connexion impossible, nouvelle tentative dans 10s...';
@@ -167,18 +191,78 @@
     const rows = list.map(item => {
       totalKm += item.km;
       totalForfait += item.forfait;
-      return `<tr>
-        <td>${escapeHtml(item.salarie)}</td>
+      const isOpen = expandedSalarie === item.salarie;
+      let html = `<tr class="salarie-row${isOpen ? ' open' : ''}" data-salarie="${escapeHtml(item.salarie)}">
+        <td><span class="chevron">▶</span> ${escapeHtml(item.salarie)}</td>
         <td class="num">${item.jours}</td>
         <td class="num km">${fmtKm(item.km)}</td>
         <td class="num forfait">${fmtEuro(item.forfait)}</td>
       </tr>`;
+      if(isOpen){
+        html += `<tr class="detail-row"><td colspan="4"><div class="detail-wrap" id="detail-wrap"><div class="detail-loading">Chargement du détail...</div></div></td></tr>`;
+      }
+      return html;
     }).join('');
     els.tableWrap.innerHTML = `
       <table>
         <thead><tr><th>Salarié</th><th>Jours</th><th>Km</th><th>Forfait</th></tr></thead>
         <tbody>${rows}</tbody>
         <tfoot><tr class="total"><td>Total</td><td></td><td class="num">${fmtKm(totalKm)}</td><td class="num">${fmtEuro(totalForfait)}</td></tr></tfoot>
+      </table>
+    `;
+    els.tableWrap.querySelectorAll('tr.salarie-row').forEach(tr => {
+      tr.addEventListener('click', () => {
+        const salarie = tr.getAttribute('data-salarie');
+        expandedSalarie = (expandedSalarie === salarie) ? null : salarie;
+        render(lastList);
+        if(expandedSalarie) loadDetail(expandedSalarie);
+      });
+    });
+  }
+
+  async function loadDetail(salarie){
+    const mois = els.mois.value || todayMonth();
+    const wrap = document.getElementById('detail-wrap');
+    try{
+      const res = await fetch('/api/trajets?salarie=' + encodeURIComponent(salarie) + '&mois=' + encodeURIComponent(mois));
+      const entries = await res.json();
+      if(!res.ok) throw new Error('Erreur de chargement du détail');
+      renderDetail(entries, wrap);
+    }catch(e){
+      if(wrap) wrap.innerHTML = '<div class="detail-loading">Détail indisponible.</div>';
+    }
+  }
+
+  function renderDetail(entries, wrap){
+    if(!wrap) return;
+    if(entries.length === 0){
+      wrap.innerHTML = '<div class="detail-loading">Aucun trajet enregistré pour ce mois.</div>';
+      return;
+    }
+    const byDate = {};
+    entries.forEach(e => { if(!byDate[e.date]) byDate[e.date] = []; byDate[e.date].push(e); });
+    const dates = Object.keys(byDate).sort();
+    let rowsHtml = '';
+    dates.forEach(date => {
+      const legs = byDate[date];
+      const dayKm = legs.reduce((s,l)=> s + Number(l.km||0), 0);
+      const dayForfait = calcForfait(dayKm);
+      const dateLabel = new Date(date + 'T00:00:00').toLocaleDateString('fr-FR', { day:'2-digit', month:'2-digit', year:'numeric' });
+      legs.forEach((leg, i) => {
+        rowsHtml += '<tr>';
+        if(i === 0) rowsHtml += `<td rowspan="${legs.length}">${dateLabel}</td>`;
+        rowsHtml += `<td>${escapeHtml(leg.depart)}</td><td>${escapeHtml(leg.arrivee)}</td><td>${fmtKm(Number(leg.km||0))}</td>`;
+        if(i === 0){
+          rowsHtml += `<td class="cell-total" rowspan="${legs.length}">${fmtKm(dayKm)}</td>`;
+          rowsHtml += `<td class="cell-forfait" rowspan="${legs.length}">${dayForfait} €</td>`;
+        }
+        rowsHtml += '</tr>';
+      });
+    });
+    wrap.innerHTML = `
+      <table class="detail-table">
+        <thead><tr><th>Date</th><th>Départ</th><th>Arrivée</th><th>Km</th><th>Total jour</th><th>Forfait jour</th></tr></thead>
+        <tbody>${rowsHtml}</tbody>
       </table>
     `;
   }
@@ -211,6 +295,7 @@
     sessionStorage.setItem(SESSION_KEY, password);
     els.loginView.style.display = 'none';
     els.dashboardView.style.display = 'block';
+    lastList = data;
     render(data);
     startPolling();
   }
