@@ -11,11 +11,31 @@ const DIRECTIONS_URL = "https://api.heigit.org/openrouteservice/v2/directions/dr
 const FOCUS_LAT = 48.5734;
 const FOCUS_LON = 7.7521;
 
+// Délai maximum par appel externe : évite qu'une requête qui traîne fasse
+// planter toute la fonction en silence (timeout Vercel, réponse 502 opaque).
+const FETCH_TIMEOUT_MS = 8000;
+
+async function fetchWithTimeout(url, options = {}) {
+  const controller = new AbortController();
+  const timeout = setTimeout(() => controller.abort(), FETCH_TIMEOUT_MS);
+  try {
+    return await fetch(url, { ...options, signal: controller.signal });
+  } catch (e) {
+    if (e.name === "AbortError") {
+      throw new Error(`Délai dépassé (${FETCH_TIMEOUT_MS / 1000}s) en appelant ${url}`);
+    }
+    throw e;
+  } finally {
+    clearTimeout(timeout);
+  }
+}
+
 async function geocode(text, apiKey) {
   const url = `${GEOCODE_URL}?api_key=${encodeURIComponent(apiKey)}&text=${encodeURIComponent(text)}&size=1&focus.point.lat=${FOCUS_LAT}&focus.point.lon=${FOCUS_LON}`;
-  const res = await fetch(url);
+  const res = await fetchWithTimeout(url);
   if (!res.ok) {
-    throw new Error(`Géocodage impossible (${res.status})`);
+    const body = await res.text().catch(() => "");
+    throw new Error(`Géocodage impossible (${res.status}) : ${body.slice(0, 300)}`);
   }
   const data = await res.json();
   const feature = data.features && data.features[0];
@@ -26,7 +46,7 @@ async function geocode(text, apiKey) {
 }
 
 async function directionsDistanceKm(coordDepart, coordArrivee, apiKey) {
-  const res = await fetch(DIRECTIONS_URL, {
+  const res = await fetchWithTimeout(DIRECTIONS_URL, {
     method: "POST",
     headers: {
       Authorization: apiKey,
@@ -38,7 +58,8 @@ async function directionsDistanceKm(coordDepart, coordArrivee, apiKey) {
     }),
   });
   if (!res.ok) {
-    throw new Error(`Calcul d'itinéraire impossible (${res.status})`);
+    const body = await res.text().catch(() => "");
+    throw new Error(`Calcul d'itinéraire impossible (${res.status}) : ${body.slice(0, 300)}`);
   }
   const data = await res.json();
   const meters = data.routes && data.routes[0] && data.routes[0].summary && data.routes[0].summary.distance;
@@ -74,6 +95,8 @@ module.exports = async (req, res) => {
     const km = await directionsDistanceKm(coordDepart, coordArrivee, apiKey);
     res.status(200).json({ km: Math.round(km * 10) / 10 });
   } catch (e) {
+    console.error("Erreur calcul distance:", e.message);
     res.status(502).json({ error: e.message || "Calcul de distance impossible" });
   }
 };
+
