@@ -645,7 +645,7 @@
         kmEl.value = String(data.km).replace('.', ',');
         if(statusEl) statusEl.textContent = `Distance calculée : ${String(data.km).replace('.', ',')} km`;
       } else {
-        if(statusEl) statusEl.textContent = "Distance non trouvée, merci de la renseigner manuellement";
+        if(statusEl) statusEl.textContent = (data.error || "Distance non trouvée") + " — renseignez le km manuellement";
       }
     }catch(e){
       if(statusEl) statusEl.textContent = "Calcul indisponible, merci de renseigner le km manuellement";
