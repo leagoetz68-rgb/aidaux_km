@@ -153,6 +153,9 @@
     color: var(--navy); text-transform:uppercase; letter-spacing:0.04em; margin-bottom:10px;
     display:flex; align-items:center;
   }
+  .calc-status{
+    display:block; font-size:11px; color: var(--ink-soft); margin-top:4px; min-height:14px;
+  }
 
   .btn{
     font-family: var(--font-body); font-weight:600; font-size:14px;
@@ -303,6 +306,7 @@
         <div class="field" style="max-width:150px;">
           <label for="f-km">Nombre de km (aller)</label>
           <input type="number" id="f-km" step="0.1" min="0" placeholder="ex. 4,2">
+          <span class="calc-status" id="aller-calc-status"></span>
         </div>
       </div>
     </div>
@@ -331,6 +335,7 @@
         <div class="field" style="max-width:150px;">
           <label for="f-retour-km">Nombre de km (retour)</label>
           <input type="number" id="f-retour-km" step="0.1" min="0" placeholder="ex. 4,2">
+          <span class="calc-status" id="retour-calc-status"></span>
         </div>
       </div>
     </div>
@@ -412,6 +417,7 @@
     fDate: $('f-date'), fKm: $('f-km'), fDepart: $('f-depart'), fArrivee: $('f-arrivee'),
     fHasRetour: $('f-has-retour'), retourBlock: $('retour-block'),
     fRetourDepart: $('f-retour-depart'), fRetourArrivee: $('f-retour-arrivee'), fRetourKm: $('f-retour-km'),
+    allerCalcStatus: $('aller-calc-status'), retourCalcStatus: $('retour-calc-status'),
     btnCopyRetour: $('btn-copy-retour'),
     btnAdd: $('btn-add'), btnSwap: $('btn-swap'),
     btnBareme: $('btn-bareme'), baremePanel: $('bareme-panel'),
@@ -628,16 +634,40 @@
     els.retourBlock.style.display = els.fHasRetour.checked ? 'block' : 'none';
   }
 
+  // --- Calcul automatique de la distance (OpenRouteService) ---
+  async function autoCalcKm(depart, arrivee, kmEl, statusEl){
+    if(!depart || !arrivee) return;
+    if(statusEl) statusEl.textContent = 'Calcul de la distance...';
+    try{
+      const res = await fetch('/api/distance?depart=' + encodeURIComponent(depart) + '&arrivee=' + encodeURIComponent(arrivee));
+      const data = await res.json();
+      if(res.ok && typeof data.km === 'number'){
+        kmEl.value = String(data.km).replace('.', ',');
+        if(statusEl) statusEl.textContent = `Distance calculée : ${String(data.km).replace('.', ',')} km`;
+      } else {
+        if(statusEl) statusEl.textContent = "Distance non trouvée, merci de la renseigner manuellement";
+      }
+    }catch(e){
+      if(statusEl) statusEl.textContent = "Calcul indisponible, merci de renseigner le km manuellement";
+    }
+  }
+
+  function maybeAutoCalc(departEl, arriveeEl, kmEl, statusEl){
+    autoCalcKm(departEl.value.trim(), arriveeEl.value.trim(), kmEl, statusEl);
+  }
+
   function copyRetourFromAller(){
     els.fRetourDepart.value = els.fArrivee.value;
     els.fRetourArrivee.value = els.fDepart.value;
     els.fRetourKm.value = els.fKm.value;
+    maybeAutoCalc(els.fRetourDepart, els.fRetourArrivee, els.fRetourKm, els.retourCalcStatus);
   }
 
   function swapAddresses(){
     const d = els.fDepart.value;
     els.fDepart.value = els.fArrivee.value;
     els.fArrivee.value = d;
+    maybeAutoCalc(els.fDepart, els.fArrivee, els.fKm, els.allerCalcStatus);
   }
 
   function exportCsv(){
@@ -688,6 +718,10 @@
   els.btnSwap.addEventListener('click', swapAddresses);
   els.fHasRetour.addEventListener('change', toggleRetourBlock);
   els.btnCopyRetour.addEventListener('click', copyRetourFromAller);
+  els.fDepart.addEventListener('change', () => maybeAutoCalc(els.fDepart, els.fArrivee, els.fKm, els.allerCalcStatus));
+  els.fArrivee.addEventListener('change', () => maybeAutoCalc(els.fDepart, els.fArrivee, els.fKm, els.allerCalcStatus));
+  els.fRetourDepart.addEventListener('change', () => maybeAutoCalc(els.fRetourDepart, els.fRetourArrivee, els.fRetourKm, els.retourCalcStatus));
+  els.fRetourArrivee.addEventListener('change', () => maybeAutoCalc(els.fRetourDepart, els.fRetourArrivee, els.fRetourKm, els.retourCalcStatus));
   els.btnPrint.addEventListener('click', () => window.print());
   els.btnCsv.addEventListener('click', exportCsv);
   els.btnReset.addEventListener('click', resetMonth);
