@@ -302,12 +302,13 @@
           <input type="text" id="f-arrivee" placeholder="Adresse d'arrivée">
         </div>
       </div>
-      <div class="field-row" style="margin-top:10px;">
+      <div class="field-row" style="margin-top:10px; align-items:flex-end;">
         <div class="field" style="max-width:150px;">
           <label for="f-km">Nombre de km (aller)</label>
           <input type="number" id="f-km" step="0.1" min="0" placeholder="ex. 4,2">
           <span class="calc-status" id="aller-calc-status"></span>
         </div>
+        <button class="tab-btn" id="btn-calc-aller" type="button">📍 Calculer</button>
       </div>
     </div>
 
@@ -331,12 +332,13 @@
           <input type="text" id="f-retour-arrivee" placeholder="Adresse d'arrivée">
         </div>
       </div>
-      <div class="field-row" style="margin-top:10px;">
+      <div class="field-row" style="margin-top:10px; align-items:flex-end;">
         <div class="field" style="max-width:150px;">
           <label for="f-retour-km">Nombre de km (retour)</label>
           <input type="number" id="f-retour-km" step="0.1" min="0" placeholder="ex. 4,2">
           <span class="calc-status" id="retour-calc-status"></span>
         </div>
+        <button class="tab-btn" id="btn-calc-retour" type="button">📍 Calculer</button>
       </div>
     </div>
 
@@ -418,6 +420,7 @@
     fHasRetour: $('f-has-retour'), retourBlock: $('retour-block'),
     fRetourDepart: $('f-retour-depart'), fRetourArrivee: $('f-retour-arrivee'), fRetourKm: $('f-retour-km'),
     allerCalcStatus: $('aller-calc-status'), retourCalcStatus: $('retour-calc-status'),
+    btnCalcAller: $('btn-calc-aller'), btnCalcRetour: $('btn-calc-retour'),
     btnCopyRetour: $('btn-copy-retour'),
     btnAdd: $('btn-add'), btnSwap: $('btn-swap'),
     btnBareme: $('btn-bareme'), baremePanel: $('bareme-panel'),
@@ -722,6 +725,8 @@
   els.fArrivee.addEventListener('change', () => maybeAutoCalc(els.fDepart, els.fArrivee, els.fKm, els.allerCalcStatus));
   els.fRetourDepart.addEventListener('change', () => maybeAutoCalc(els.fRetourDepart, els.fRetourArrivee, els.fRetourKm, els.retourCalcStatus));
   els.fRetourArrivee.addEventListener('change', () => maybeAutoCalc(els.fRetourDepart, els.fRetourArrivee, els.fRetourKm, els.retourCalcStatus));
+  els.btnCalcAller.addEventListener('click', () => maybeAutoCalc(els.fDepart, els.fArrivee, els.fKm, els.allerCalcStatus));
+  els.btnCalcRetour.addEventListener('click', () => maybeAutoCalc(els.fRetourDepart, els.fRetourArrivee, els.fRetourKm, els.retourCalcStatus));
   els.btnPrint.addEventListener('click', () => window.print());
   els.btnCsv.addEventListener('click', exportCsv);
   els.btnReset.addEventListener('click', resetMonth);
