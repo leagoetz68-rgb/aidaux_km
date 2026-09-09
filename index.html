@@ -326,16 +326,6 @@
   <!-- ======================= VUE SALARIÉ ======================= -->
   <div id="view-salarie">
 
-    <div class="card" id="share-card">
-      <div class="section-label"><span class="dot"></span>Lien à envoyer aux salariés</div>
-      <div class="field-row">
-        <div class="field">
-          <input type="text" id="share-link" readonly>
-        </div>
-        <button class="btn btn-ghost btn-sm" id="btn-copy-link" type="button" style="white-space:nowrap;">📋 Copier le lien</button>
-      </div>
-    </div>
-
     <div class="card">
       <div class="section-label"><span class="dot"></span>Informations</div>
       <div class="field-row">
@@ -476,6 +466,16 @@
 
   <!-- ======================= VUE DIRECTION ======================= -->
   <div id="view-direction" style="display:none;">
+
+    <div class="card" id="share-card">
+      <div class="section-label"><span class="dot"></span>Lien à envoyer aux salariés</div>
+      <div class="field-row">
+        <div class="field">
+          <input type="text" id="share-link" readonly>
+        </div>
+        <button class="btn btn-ghost btn-sm" id="btn-copy-link" type="button" style="white-space:nowrap;">📋 Copier le lien</button>
+      </div>
+    </div>
 
     <div class="card" id="dir-login-view">
       <div class="section-label"><span class="dot"></span>Accès direction</div>
@@ -805,7 +805,7 @@
       });
     });
     const csv = rows.map(r => r.map(c => '"' + String(c).replace(/"/g,'""') + '"').join(';')).join('\n');
-    const blob = new Blob(['﻿' + csv], { type: 'text/csv;charset=utf-8;' });
+    const blob = new Blob(['\ufeff' + csv], { type: 'text/csv;charset=utf-8;' });
     const url = URL.createObjectURL(blob);
     const a = document.createElement('a');
     const name = (els.salarie.value || 'salarie').trim().replace(/\s+/g,'_') || 'salarie';
@@ -1087,7 +1087,7 @@
     });
     rows.push(['Total','', String(Math.round(totalKm*10)/10).replace('.', ','), String(Math.round(totalForfait*100)/100).replace('.', ',')]);
     const csv = rows.map(r => r.map(c => '"' + String(c).replace(/"/g,'""') + '"').join(';')).join('\n');
-    const blob = new Blob(['﻿' + csv], { type: 'text/csv;charset=utf-8;' });
+    const blob = new Blob(['\ufeff' + csv], { type: 'text/csv;charset=utf-8;' });
     const url = URL.createObjectURL(blob);
     const a = document.createElement('a');
     a.href = url;
