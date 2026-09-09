@@ -71,16 +71,39 @@
   }
   .hero p{ margin:0; font-size:13px; opacity:0.85; max-width: 50ch; }
 
+  /* Onglets Salarié / Direction */
+  .view-tabs{
+    display:flex; gap:6px;
+    background: var(--surface);
+    border-radius: 999px;
+    box-shadow: var(--shadow);
+    padding: 5px;
+    margin: -22px 16px 4px;
+    position: relative;
+    z-index: 3;
+  }
+  .view-tab{
+    flex:1;
+    font-family: var(--font-display); font-weight:600; font-size:13.5px;
+    color: var(--ink-soft); background: transparent; border:none; cursor:pointer;
+    padding: 11px 12px; border-radius: 999px;
+    display:inline-flex; align-items:center; justify-content:center; gap:7px;
+    transition: background 0.15s, color 0.15s;
+  }
+  .view-tab:hover{ color: var(--navy); }
+  .view-tab.active{ background: var(--navy); color: white; }
+
   /* Sections */
   .card{
     background: var(--surface);
     border-radius: var(--radius);
     box-shadow: var(--shadow);
     padding: 18px;
-    margin: -22px 16px 16px;
+    margin: 16px 16px;
     position: relative;
     z-index: 2;
   }
+  #view-salarie > .card:first-child{ margin-top: 12px; }
   .card + .card{ margin-top: 16px; }
   .section-header-row{ display:flex; align-items:center; justify-content:space-between; gap:10px; flex-wrap:wrap; margin-bottom:12px; }
   .section-label{
@@ -172,7 +195,7 @@
   .btn-danger-ghost{ background:transparent; color: var(--danger); border: 1.5px solid #F1D2C9; }
   .btn-sm{ padding: 7px 10px; font-size:12.5px; }
 
-  /* Table */
+  /* Table salarié */
   .table-wrap{ overflow-x:auto; margin: 0 -2px; }
   table.trip-table{ width:100%; border-collapse: collapse; font-size: 12.5px; min-width: 560px; }
   .trip-table th, .trip-table td{
@@ -208,7 +231,7 @@
   }
   .empty-state .icon{ font-size: 26px; margin-bottom:8px; }
 
-  /* Sticky total bar */
+  /* Sticky total bar (salarié) */
   .total-bar{
     position: sticky; bottom: 0; left:0; right:0;
     background: var(--surface);
@@ -237,8 +260,42 @@
 
   .loading-row{ text-align:center; padding: 20px; color: var(--ink-soft); font-size:13px; }
 
+  /* ===== Vue direction ===== */
+  #view-direction .status-row{ display:flex; align-items:center; justify-content:space-between; margin-bottom:12px; flex-wrap:wrap; gap:8px; }
+  #view-direction .live-dot{ display:inline-flex; align-items:center; gap:6px; font-size:11px; color: var(--ink-soft); }
+  #view-direction .live-dot .dot{ width:7px; height:7px; border-radius:50%; background:var(--teal); animation: dirpulse 1.6s infinite; }
+  @keyframes dirpulse{ 0%,100%{opacity:1;} 50%{opacity:0.3;} }
+  #view-direction table.dir-table{ width:100%; border-collapse:collapse; font-size:13px; }
+  #view-direction table.dir-table th, #view-direction table.dir-table td{ border:1px solid var(--line); padding:9px 10px; text-align:left; }
+  #view-direction table.dir-table thead th{
+    background: var(--navy-wash); color: var(--navy); font-family: var(--font-display);
+    font-weight:600; font-size:11px; text-transform:uppercase; letter-spacing:0.03em;
+  }
+  #view-direction td.num{ font-family: var(--font-mono); font-weight:600; white-space:nowrap; }
+  #view-direction td.km{ color: var(--teal); }
+  #view-direction td.forfait{ color: var(--coral); }
+  #view-direction tr.total td{ background: var(--navy); color:white; font-weight:700; }
+  #view-direction tr.salarie-row{ cursor:pointer; }
+  #view-direction tr.salarie-row:hover td{ background: var(--teal-wash); }
+  #view-direction tr.salarie-row td:first-child{ display:flex; align-items:center; gap:6px; }
+  #view-direction tr.salarie-row .chevron{ display:inline-block; transition: transform 0.15s; font-size:11px; color: var(--ink-soft); }
+  #view-direction tr.salarie-row.open .chevron{ transform: rotate(90deg); }
+  #view-direction tr.detail-row td{ padding:0; border-top:none; }
+  #view-direction .detail-wrap{ padding:10px 14px 14px; background:#FAFBFF; }
+  #view-direction table.detail-table{ width:100%; border-collapse:collapse; font-size:12px; margin-top:6px; }
+  #view-direction table.detail-table th, #view-direction table.detail-table td{ border:1px solid var(--line); padding:6px 8px; text-align:left; }
+  #view-direction table.detail-table thead th{ background: var(--navy-wash); color:var(--navy); font-size:10.5px; text-transform:uppercase; }
+  #view-direction table.detail-table td.cell-total{ background: var(--teal-wash); font-family: var(--font-mono); font-weight:700; color:var(--navy); }
+  #view-direction table.detail-table td.cell-forfait{ background: var(--coral-wash); font-family: var(--font-mono); font-weight:700; color:var(--coral); }
+  #view-direction .detail-loading{ font-size:12px; color: var(--ink-soft); padding:8px 0; }
+  #view-direction .empty-dir{ text-align:center; padding:24px; color: var(--ink-soft); font-size:13.5px; }
+  #view-direction .error-box{ background: var(--coral-wash); color:#8a3220; border-radius:10px; padding:10px 14px; font-size:13px; margin-bottom:12px; }
+  #view-direction .btn-login{ background: var(--teal); color:white; width:100%; margin-top:12px; }
+  #view-direction .btn-login:hover{ background: var(--navy); }
+  #view-direction .table-wrap{ overflow-x:auto; }
+
   @media print{
-    .hero, .toolbar, .swap-btn, .leg-del, .no-print, .btn-primary, .checkbox-row, .total-bar{ display:none !important; }
+    .hero, .view-tabs, .toolbar, .swap-btn, .leg-del, .no-print, .btn-primary, .checkbox-row, .total-bar{ display:none !important; }
     .card{ box-shadow:none; margin: 0 0 12px; border:1px solid #ccc; }
     body{ background:white; }
     tr.total-row td{ background:#eee !important; color:#000 !important; }
@@ -260,155 +317,200 @@
     <p>1er lieu d'intervention / dernier lieu d'intervention — domicile. Enregistrez vos trajets, le total et le forfait se calculent tout seuls.</p>
   </div>
 
-  <div class="card" id="share-card">
-    <div class="section-label"><span class="dot"></span>Lien à envoyer aux salariés</div>
-    <div class="field-row">
-      <div class="field">
-        <input type="text" id="share-link" readonly>
-      </div>
-      <button class="btn btn-ghost btn-sm" id="btn-copy-link" type="button" style="white-space:nowrap;">📋 Copier le lien</button>
-    </div>
+  <!-- Onglets Salarié / Direction -->
+  <div class="view-tabs no-print" role="tablist">
+    <button class="view-tab active" id="tab-salarie" type="button" role="tab">🚗 Salarié</button>
+    <button class="view-tab" id="tab-direction" type="button" role="tab">📊 Direction</button>
   </div>
 
-  <div class="card">
-    <div class="section-label"><span class="dot"></span>Informations</div>
-    <div class="field-row">
-      <div class="field">
-        <label for="salarie">Nom du salarié</label>
-        <input type="text" id="salarie" placeholder="ex. Erdogan">
-      </div>
-      <div class="field">
-        <label for="mois">Mois concerné</label>
-        <input type="month" id="mois">
-      </div>
-    </div>
-    <div class="field-row" style="margin-top:10px;">
-      <div class="field">
-        <label for="domicile">Adresse du domicile (départ habituel)</label>
-        <input type="text" id="domicile" placeholder="ex. 1 rue du canal 67550 Vendenheim">
-      </div>
-    </div>
-  </div>
+  <!-- ======================= VUE SALARIÉ ======================= -->
+  <div id="view-salarie">
 
-  <div class="card">
-    <div class="section-label"><span class="dot"></span>Ajouter un trajet</div>
-    <div class="field-row">
-      <div class="field" style="max-width:170px;">
-        <label for="f-date">Date</label>
-        <input type="date" id="f-date">
-      </div>
-    </div>
-
-    <div class="leg-block">
-      <div class="leg-block-title">Aller</div>
-      <div class="field-row" style="align-items:flex-end;">
+    <div class="card" id="share-card">
+      <div class="section-label"><span class="dot"></span>Lien à envoyer aux salariés</div>
+      <div class="field-row">
         <div class="field">
-          <label for="f-depart">Adresse de départ</label>
-          <input type="text" id="f-depart" placeholder="Adresse de départ">
+          <input type="text" id="share-link" readonly>
         </div>
-        <button class="swap-btn" id="btn-swap" type="button" title="Inverser départ / arrivée">⇅</button>
-        <div class="field">
-          <label for="f-arrivee">Adresse d'arrivée</label>
-          <input type="text" id="f-arrivee" placeholder="Adresse d'arrivée">
-        </div>
-      </div>
-      <div class="field-row" style="margin-top:10px; align-items:flex-end;">
-        <div class="field" style="max-width:150px;">
-          <label for="f-km">Nombre de km (aller)</label>
-          <input type="number" id="f-km" step="0.1" min="0" placeholder="ex. 4,2">
-          <span class="calc-status" id="aller-calc-status"></span>
-        </div>
-        <button class="tab-btn" id="btn-calc-aller" type="button">📍 Calculer</button>
+        <button class="btn btn-ghost btn-sm" id="btn-copy-link" type="button" style="white-space:nowrap;">📋 Copier le lien</button>
       </div>
     </div>
 
-    <label class="checkbox-row">
-      <input type="checkbox" id="f-has-retour" checked>
-      Ajouter aussi un trajet retour
-    </label>
-
-    <div class="leg-block" id="retour-block">
-      <div class="leg-block-title">
-        Retour
-        <button class="tab-btn" id="btn-copy-retour" type="button" style="margin-left:8px;">↺ Reprendre l'aller inversé</button>
-      </div>
-      <div class="field-row" style="align-items:flex-end;">
+    <div class="card">
+      <div class="section-label"><span class="dot"></span>Informations</div>
+      <div class="field-row">
         <div class="field">
-          <label for="f-retour-depart">Adresse de départ (retour)</label>
-          <input type="text" id="f-retour-depart" placeholder="Adresse de départ">
+          <label for="salarie">Nom du salarié</label>
+          <input type="text" id="salarie" placeholder="ex. Erdogan">
         </div>
         <div class="field">
-          <label for="f-retour-arrivee">Adresse d'arrivée (retour)</label>
-          <input type="text" id="f-retour-arrivee" placeholder="Adresse d'arrivée">
+          <label for="mois">Mois concerné</label>
+          <input type="month" id="mois">
         </div>
       </div>
-      <div class="field-row" style="margin-top:10px; align-items:flex-end;">
-        <div class="field" style="max-width:150px;">
-          <label for="f-retour-km">Nombre de km (retour)</label>
-          <input type="number" id="f-retour-km" step="0.1" min="0" placeholder="ex. 4,2">
-          <span class="calc-status" id="retour-calc-status"></span>
+      <div class="field-row" style="margin-top:10px;">
+        <div class="field">
+          <label for="domicile">Adresse du domicile (départ habituel)</label>
+          <input type="text" id="domicile" placeholder="ex. 1 rue du canal 67550 Vendenheim">
         </div>
-        <button class="tab-btn" id="btn-calc-retour" type="button">📍 Calculer</button>
       </div>
     </div>
 
-    <button class="btn btn-primary" id="btn-add">+ Ajouter le trajet</button>
-  </div>
+    <div class="card">
+      <div class="section-label"><span class="dot"></span>Ajouter un trajet</div>
+      <div class="field-row">
+        <div class="field" style="max-width:170px;">
+          <label for="f-date">Date</label>
+          <input type="date" id="f-date">
+        </div>
+      </div>
 
-  <div class="card">
-    <div class="section-header-row">
-      <div class="section-label"><span class="dot"></span>Trajets du mois</div>
-      <button class="tab-btn no-print" id="btn-bareme" type="button">ℹ️ Barème de remboursement</button>
+      <div class="leg-block">
+        <div class="leg-block-title">Aller</div>
+        <div class="field-row" style="align-items:flex-end;">
+          <div class="field">
+            <label for="f-depart">Adresse de départ</label>
+            <input type="text" id="f-depart" placeholder="Adresse de départ">
+          </div>
+          <button class="swap-btn" id="btn-swap" type="button" title="Inverser départ / arrivée">⇅</button>
+          <div class="field">
+            <label for="f-arrivee">Adresse d'arrivée</label>
+            <input type="text" id="f-arrivee" placeholder="Adresse d'arrivée">
+          </div>
+        </div>
+        <div class="field-row" style="margin-top:10px; align-items:flex-end;">
+          <div class="field" style="max-width:150px;">
+            <label for="f-km">Nombre de km (aller)</label>
+            <input type="number" id="f-km" step="0.1" min="0" placeholder="ex. 4,2">
+            <span class="calc-status" id="aller-calc-status"></span>
+          </div>
+          <button class="tab-btn" id="btn-calc-aller" type="button">📍 Calculer</button>
+        </div>
+      </div>
+
+      <label class="checkbox-row">
+        <input type="checkbox" id="f-has-retour" checked>
+        Ajouter aussi un trajet retour
+      </label>
+
+      <div class="leg-block" id="retour-block">
+        <div class="leg-block-title">
+          Retour
+          <button class="tab-btn" id="btn-copy-retour" type="button" style="margin-left:8px;">↺ Reprendre l'aller inversé</button>
+        </div>
+        <div class="field-row" style="align-items:flex-end;">
+          <div class="field">
+            <label for="f-retour-depart">Adresse de départ (retour)</label>
+            <input type="text" id="f-retour-depart" placeholder="Adresse de départ">
+          </div>
+          <div class="field">
+            <label for="f-retour-arrivee">Adresse d'arrivée (retour)</label>
+            <input type="text" id="f-retour-arrivee" placeholder="Adresse d'arrivée">
+          </div>
+        </div>
+        <div class="field-row" style="margin-top:10px; align-items:flex-end;">
+          <div class="field" style="max-width:150px;">
+            <label for="f-retour-km">Nombre de km (retour)</label>
+            <input type="number" id="f-retour-km" step="0.1" min="0" placeholder="ex. 4,2">
+            <span class="calc-status" id="retour-calc-status"></span>
+          </div>
+          <button class="tab-btn" id="btn-calc-retour" type="button">📍 Calculer</button>
+        </div>
+      </div>
+
+      <button class="btn btn-primary" id="btn-add">+ Ajouter le trajet</button>
     </div>
 
-    <div id="bareme-panel" class="bareme-panel no-print" style="display:none;">
-      <div class="bareme-row"><span>Moins de 20,99 km / jour</span><strong>2 €</strong></div>
-      <div class="bareme-row"><span>Entre 21 et 40,99 km / jour</span><strong>4 €</strong></div>
-      <div class="bareme-row"><span>Au-delà de 41 km / jour</span><strong>6 €</strong></div>
-      <p class="bareme-note">Le forfait est calculé automatiquement par journée, sur la base du total de km parcourus ce jour-là.</p>
+    <div class="card">
+      <div class="section-header-row">
+        <div class="section-label"><span class="dot"></span>Trajets du mois</div>
+        <button class="tab-btn no-print" id="btn-bareme" type="button">ℹ️ Barème de remboursement</button>
+      </div>
+
+      <div id="bareme-panel" class="bareme-panel no-print" style="display:none;">
+        <div class="bareme-row"><span>Moins de 20,99 km / jour</span><strong>2 €</strong></div>
+        <div class="bareme-row"><span>Entre 21 et 40,99 km / jour</span><strong>4 €</strong></div>
+        <div class="bareme-row"><span>Au-delà de 41 km / jour</span><strong>6 €</strong></div>
+        <p class="bareme-note">Le forfait est calculé automatiquement par journée, sur la base du total de km parcourus ce jour-là.</p>
+      </div>
+
+      <div id="loading" class="loading-row">Chargement de vos trajets…</div>
+
+      <div id="table-wrap" class="table-wrap" style="display:none;">
+        <table class="trip-table">
+          <thead>
+            <tr>
+              <th>Date</th>
+              <th>Adresse de départ</th>
+              <th>Adresse arrivée</th>
+              <th>Km</th>
+              <th>Total jour</th>
+              <th>Forfait jour</th>
+              <th class="no-print"></th>
+            </tr>
+          </thead>
+          <tbody id="trip-table-body"></tbody>
+          <tfoot>
+            <tr class="total-row">
+              <td colspan="3">Total du mois<span class="direction-tag">réservé à la direction</span></td>
+              <td class="cell-km"><span id="month-km-total">0 km</span></td>
+              <td class="cell-forfait" colspan="2"><span id="month-forfait-total">0 €</span></td>
+            </tr>
+          </tfoot>
+        </table>
+      </div>
+
+      <div id="empty" class="empty-state" style="display:none;">
+        <div class="icon">🚗</div>
+        Aucun trajet enregistré pour ce mois pour l'instant.
+      </div>
+
+      <div class="toolbar no-print">
+        <button class="btn btn-ghost btn-sm" id="btn-print">🖨️ Imprimer</button>
+        <button class="btn btn-ghost btn-sm" id="btn-csv">⬇️ Exporter CSV</button>
+        <button class="btn btn-danger-ghost btn-sm" id="btn-reset">Effacer le mois</button>
+      </div>
     </div>
 
-    <div id="loading" class="loading-row">Chargement de vos trajets…</div>
+  </div><!-- /view-salarie -->
 
-    <div id="table-wrap" class="table-wrap" style="display:none;">
-      <table class="trip-table">
-        <thead>
-          <tr>
-            <th>Date</th>
-            <th>Adresse de départ</th>
-            <th>Adresse arrivée</th>
-            <th>Km</th>
-            <th>Total jour</th>
-            <th>Forfait jour</th>
-            <th class="no-print"></th>
-          </tr>
-        </thead>
-        <tbody id="trip-table-body"></tbody>
-        <tfoot>
-          <tr class="total-row">
-            <td colspan="3">Total du mois<span class="direction-tag">réservé à la direction</span></td>
-            <td class="cell-km"><span id="month-km-total">0 km</span></td>
-            <td class="cell-forfait" colspan="2"><span id="month-forfait-total">0 €</span></td>
-          </tr>
-        </tfoot>
-      </table>
+  <!-- ======================= VUE DIRECTION ======================= -->
+  <div id="view-direction" style="display:none;">
+
+    <div class="card" id="dir-login-view">
+      <div class="section-label"><span class="dot"></span>Accès direction</div>
+      <div class="field-row" style="margin-top:12px;">
+        <div class="field">
+          <label for="dir-password">Mot de passe direction</label>
+          <input type="password" id="dir-password" placeholder="••••••••">
+        </div>
+      </div>
+      <div id="dir-login-error" class="error-box" style="display:none; margin-top:10px;"></div>
+      <button class="btn btn-login" id="dir-btn-login" type="button">Se connecter</button>
     </div>
 
-    <div id="empty" class="empty-state" style="display:none;">
-      <div class="icon">🚗</div>
-      Aucun trajet enregistré pour ce mois pour l'instant.
+    <div class="card" id="dir-dashboard-view" style="display:none;">
+      <div class="status-row">
+        <div class="field" style="max-width:180px;">
+          <label for="dir-mois">Mois</label>
+          <input type="month" id="dir-mois">
+        </div>
+        <div class="live-dot"><span class="dot"></span> Actualisation automatique</div>
+      </div>
+      <div id="dir-dash-error" class="error-box" style="display:none;"></div>
+      <div id="dir-table-wrap" class="table-wrap"></div>
+      <div id="dir-empty" class="empty-dir" style="display:none;">Aucun trajet déclaré pour ce mois pour l'instant.</div>
+      <div class="toolbar no-print">
+        <button class="btn btn-ghost btn-sm" id="dir-btn-print">🖨️ Imprimer</button>
+        <button class="btn btn-ghost btn-sm" id="dir-btn-csv">⬇️ Exporter CSV</button>
+      </div>
     </div>
 
-    <div class="toolbar no-print">
-      <button class="btn btn-ghost btn-sm" id="btn-print">🖨️ Imprimer</button>
-      <button class="btn btn-ghost btn-sm" id="btn-csv">⬇️ Exporter CSV</button>
-      <button class="btn btn-danger-ghost btn-sm" id="btn-reset">Effacer le mois</button>
-    </div>
-  </div>
+  </div><!-- /view-direction -->
 
 </div>
 
-<div class="total-bar no-print">
+<div class="total-bar no-print" id="total-bar">
   <div class="tb-group">
     <span class="label">Total km</span>
     <span class="value" id="month-total">0 km</span>
@@ -422,6 +524,7 @@
 <div class="toast" id="toast"></div>
 
 <script>
+/* ======================= VUE SALARIÉ ======================= */
 (function(){
   const $ = (id) => document.getElementById(id);
   const els = {
@@ -702,7 +805,7 @@
       });
     });
     const csv = rows.map(r => r.map(c => '"' + String(c).replace(/"/g,'""') + '"').join(';')).join('\n');
-    const blob = new Blob(['\ufeff' + csv], { type: 'text/csv;charset=utf-8;' });
+    const blob = new Blob(['﻿' + csv], { type: 'text/csv;charset=utf-8;' });
     const url = URL.createObjectURL(blob);
     const a = document.createElement('a');
     const name = (els.salarie.value || 'salarie').trim().replace(/\s+/g,'_') || 'salarie';
@@ -777,6 +880,277 @@
     if(!els.fDepart.value) els.fDepart.value = els.domicile.value;
     await loadEntries();
   })();
+})();
+
+/* ======================= VUE DIRECTION ======================= */
+(function(){
+  const $ = (id) => document.getElementById(id);
+  const els = {
+    loginView: $('dir-login-view'), dashboardView: $('dir-dashboard-view'),
+    password: $('dir-password'), btnLogin: $('dir-btn-login'), loginError: $('dir-login-error'),
+    mois: $('dir-mois'), dashError: $('dir-dash-error'), tableWrap: $('dir-table-wrap'), empty: $('dir-empty'),
+    btnPrint: $('dir-btn-print'), btnCsv: $('dir-btn-csv'), toast: $('toast'),
+  };
+
+  let currentPassword = '';
+  let pollTimer = null;
+  let expandedSalarie = null;
+  let lastList = [];
+  let isActive = false;
+  const SESSION_KEY = 'fraisKm:adminPassword';
+
+  function todayMonth(){
+    const d = new Date();
+    return d.getFullYear() + '-' + String(d.getMonth()+1).padStart(2,'0');
+  }
+  function fmtKm(n){ return (Math.round(n*10)/10).toString().replace('.', ',') + ' km'; }
+  function fmtEuro(n){ return (Math.round(n*100)/100).toString().replace('.', ',') + ' €'; }
+  function escapeHtml(str){ const d = document.createElement('div'); d.textContent = str || ''; return d.innerHTML; }
+  function calcForfait(km){
+    if(km <= 20.99) return 2;
+    if(km <= 40.99) return 4;
+    return 6;
+  }
+  function showToast(msg){
+    els.toast.textContent = msg;
+    els.toast.classList.add('show');
+    setTimeout(()=> els.toast.classList.remove('show'), 1800);
+  }
+
+  async function fetchSalaries(){
+    const mois = els.mois.value || todayMonth();
+    try{
+      const res = await fetch('/api/salaries?mois=' + encodeURIComponent(mois) + '&password=' + encodeURIComponent(currentPassword));
+      if(res.status === 401){
+        stopPolling();
+        currentPassword = '';
+        sessionStorage.removeItem(SESSION_KEY);
+        els.dashboardView.style.display = 'none';
+        els.loginView.style.display = 'block';
+        els.loginError.style.display = 'block';
+        els.loginError.textContent = 'Session expirée, merci de vous reconnecter.';
+        return;
+      }
+      const data = await res.json();
+      if(!res.ok){
+        els.dashError.style.display = 'block';
+        els.dashError.textContent = data.error || 'Erreur de chargement';
+        return;
+      }
+      els.dashError.style.display = 'none';
+      lastList = data;
+      render(data);
+      if(expandedSalarie){
+        loadDetail(expandedSalarie);
+      }
+    }catch(e){
+      els.dashError.style.display = 'block';
+      els.dashError.textContent = 'Connexion impossible, nouvelle tentative dans 10s...';
+    }
+  }
+
+  function render(list){
+    if(list.length === 0){
+      els.tableWrap.innerHTML = '';
+      els.empty.style.display = 'block';
+      return;
+    }
+    els.empty.style.display = 'none';
+    let totalKm = 0, totalForfait = 0;
+    const rows = list.map(item => {
+      totalKm += item.km;
+      totalForfait += item.forfait;
+      const isOpen = expandedSalarie === item.salarie;
+      let html = `<tr class="salarie-row${isOpen ? ' open' : ''}" data-salarie="${escapeHtml(item.salarie)}">
+        <td><span class="chevron">▶</span> ${escapeHtml(item.salarie)}</td>
+        <td class="num">${item.jours}</td>
+        <td class="num km">${fmtKm(item.km)}</td>
+        <td class="num forfait">${fmtEuro(item.forfait)}</td>
+      </tr>`;
+      if(isOpen){
+        html += `<tr class="detail-row"><td colspan="4"><div class="detail-wrap" id="dir-detail-wrap"><div class="detail-loading">Chargement du détail...</div></div></td></tr>`;
+      }
+      return html;
+    }).join('');
+    els.tableWrap.innerHTML = `
+      <table class="dir-table">
+        <thead><tr><th>Salarié</th><th>Jours</th><th>Km</th><th>Forfait</th></tr></thead>
+        <tbody>${rows}</tbody>
+        <tfoot><tr class="total"><td>Total</td><td></td><td class="num">${fmtKm(totalKm)}</td><td class="num">${fmtEuro(totalForfait)}</td></tr></tfoot>
+      </table>
+    `;
+    els.tableWrap.querySelectorAll('tr.salarie-row').forEach(tr => {
+      tr.addEventListener('click', () => {
+        const salarie = tr.getAttribute('data-salarie');
+        expandedSalarie = (expandedSalarie === salarie) ? null : salarie;
+        render(lastList);
+        if(expandedSalarie) loadDetail(expandedSalarie);
+      });
+    });
+  }
+
+  async function loadDetail(salarie){
+    const mois = els.mois.value || todayMonth();
+    const wrap = document.getElementById('dir-detail-wrap');
+    try{
+      const res = await fetch('/api/trajets?salarie=' + encodeURIComponent(salarie) + '&mois=' + encodeURIComponent(mois));
+      const entries = await res.json();
+      if(!res.ok) throw new Error('Erreur de chargement du détail');
+      renderDetail(entries, wrap);
+    }catch(e){
+      if(wrap) wrap.innerHTML = '<div class="detail-loading">Détail indisponible.</div>';
+    }
+  }
+
+  function renderDetail(entries, wrap){
+    if(!wrap) return;
+    if(entries.length === 0){
+      wrap.innerHTML = '<div class="detail-loading">Aucun trajet enregistré pour ce mois.</div>';
+      return;
+    }
+    const byDate = {};
+    entries.forEach(e => { if(!byDate[e.date]) byDate[e.date] = []; byDate[e.date].push(e); });
+    const dates = Object.keys(byDate).sort();
+    let rowsHtml = '';
+    dates.forEach(date => {
+      const legs = byDate[date];
+      const dayKm = legs.reduce((s,l)=> s + Number(l.km||0), 0);
+      const dayForfait = calcForfait(dayKm);
+      const dateLabel = new Date(date + 'T00:00:00').toLocaleDateString('fr-FR', { day:'2-digit', month:'2-digit', year:'numeric' });
+      legs.forEach((leg, i) => {
+        rowsHtml += '<tr>';
+        if(i === 0) rowsHtml += `<td rowspan="${legs.length}">${dateLabel}</td>`;
+        rowsHtml += `<td>${escapeHtml(leg.depart)}</td><td>${escapeHtml(leg.arrivee)}</td><td>${fmtKm(Number(leg.km||0))}</td>`;
+        if(i === 0){
+          rowsHtml += `<td class="cell-total" rowspan="${legs.length}">${fmtKm(dayKm)}</td>`;
+          rowsHtml += `<td class="cell-forfait" rowspan="${legs.length}">${dayForfait} €</td>`;
+        }
+        rowsHtml += '</tr>';
+      });
+    });
+    wrap.innerHTML = `
+      <table class="detail-table">
+        <thead><tr><th>Date</th><th>Départ</th><th>Arrivée</th><th>Km</th><th>Total jour</th><th>Forfait jour</th></tr></thead>
+        <tbody>${rowsHtml}</tbody>
+      </table>
+    `;
+  }
+
+  function startPolling(){
+    stopPolling();
+    fetchSalaries();
+    pollTimer = setInterval(() => { if(isActive) fetchSalaries(); }, 10000);
+  }
+  function stopPolling(){
+    if(pollTimer){ clearInterval(pollTimer); pollTimer = null; }
+  }
+
+  async function tryLogin(password){
+    currentPassword = password;
+    els.loginError.style.display = 'none';
+    const mois = els.mois.value || todayMonth();
+    let res;
+    try{
+      res = await fetch('/api/salaries?mois=' + encodeURIComponent(mois) + '&password=' + encodeURIComponent(password));
+    }catch(e){
+      els.loginError.style.display = 'block';
+      els.loginError.textContent = 'Connexion impossible, réessayez.';
+      return;
+    }
+    if(res.status === 401){
+      currentPassword = '';
+      els.loginError.style.display = 'block';
+      els.loginError.textContent = 'Mot de passe incorrect.';
+      return;
+    }
+    const data = await res.json().catch(()=>null);
+    if(!res.ok){
+      els.loginError.style.display = 'block';
+      els.loginError.textContent = (data && data.error) || 'Erreur de connexion.';
+      return;
+    }
+    sessionStorage.setItem(SESSION_KEY, password);
+    els.loginView.style.display = 'none';
+    els.dashboardView.style.display = 'block';
+    lastList = data;
+    render(data);
+    if(isActive) startPolling();
+  }
+
+  function exportCsv(){
+    if(!lastList || lastList.length === 0){ showToast('Aucune donnée à exporter'); return; }
+    const rows = [['Salarié','Jours','Total km','Forfait (€)']];
+    let totalKm = 0, totalForfait = 0;
+    lastList.forEach(item => {
+      totalKm += item.km; totalForfait += item.forfait;
+      rows.push([item.salarie, String(item.jours), String(item.km).replace('.', ','), String(item.forfait).replace('.', ',')]);
+    });
+    rows.push(['Total','', String(Math.round(totalKm*10)/10).replace('.', ','), String(Math.round(totalForfait*100)/100).replace('.', ',')]);
+    const csv = rows.map(r => r.map(c => '"' + String(c).replace(/"/g,'""') + '"').join(';')).join('\n');
+    const blob = new Blob(['﻿' + csv], { type: 'text/csv;charset=utf-8;' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `frais_kms_direction_${els.mois.value || 'mois'}.csv`;
+    document.body.appendChild(a);
+    a.click();
+    a.remove();
+    URL.revokeObjectURL(url);
+  }
+
+  els.btnLogin.addEventListener('click', () => {
+    const pwd = els.password.value.trim();
+    if(!pwd) return;
+    tryLogin(pwd);
+  });
+  els.password.addEventListener('keydown', (e) => {
+    if(e.key === 'Enter') els.btnLogin.click();
+  });
+  els.mois.addEventListener('change', () => { if(currentPassword) fetchSalaries(); });
+  if(els.btnPrint) els.btnPrint.addEventListener('click', () => window.print());
+  if(els.btnCsv) els.btnCsv.addEventListener('click', exportCsv);
+
+  // Contrôle depuis les onglets
+  window.DirectionView = {
+    activate(){
+      isActive = true;
+      if(!els.mois.value) els.mois.value = todayMonth();
+      if(currentPassword){
+        startPolling();
+      } else {
+        const saved = sessionStorage.getItem(SESSION_KEY);
+        if(saved) tryLogin(saved);
+      }
+    },
+    deactivate(){
+      isActive = false;
+      stopPolling();
+    }
+  };
+})();
+
+/* ======================= ONGLETS ======================= */
+(function(){
+  const tabS = document.getElementById('tab-salarie');
+  const tabD = document.getElementById('tab-direction');
+  const viewS = document.getElementById('view-salarie');
+  const viewD = document.getElementById('view-direction');
+  const totalBar = document.getElementById('total-bar');
+
+  function showSalarie(){
+    tabS.classList.add('active'); tabD.classList.remove('active');
+    viewS.style.display = ''; viewD.style.display = 'none';
+    if(totalBar) totalBar.style.display = '';
+    if(window.DirectionView) window.DirectionView.deactivate();
+  }
+  function showDirection(){
+    tabD.classList.add('active'); tabS.classList.remove('active');
+    viewD.style.display = ''; viewS.style.display = 'none';
+    if(totalBar) totalBar.style.display = 'none';
+    if(window.DirectionView) window.DirectionView.activate();
+  }
+  tabS.addEventListener('click', showSalarie);
+  tabD.addEventListener('click', showDirection);
 })();
 </script>
 </body>
