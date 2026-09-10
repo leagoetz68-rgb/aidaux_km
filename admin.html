@@ -98,12 +98,21 @@
   <div id="login-view" class="card login-card">
     <div class="field-row">
       <div class="field">
-        <label for="password">Mot de passe direction</label>
+        <label for="email">Adresse email</label>
+        <input type="email" id="email" placeholder="prenom.nom@aidaux.fr">
+      </div>
+    </div>
+    <div class="field-row" style="margin-top:10px;">
+      <div class="field">
+        <label for="password">Mot de passe</label>
         <input type="password" id="password" placeholder="••••••••">
       </div>
     </div>
     <div id="login-error" class="error-box" style="display:none; margin-top:10px;"></div>
     <button class="btn" id="btn-login" style="width:100%; margin-top:12px;">Se connecter</button>
+    <div style="text-align:center; margin-top:12px; font-size:13px;">
+      <a href="/reset.html" style="color:var(--navy); text-decoration:none;">Mot de passe oublié / première connexion</a>
+    </div>
   </div>
 
   <div id="dashboard-view" class="card" style="display:none;">
@@ -125,15 +134,15 @@
   const $ = (id) => document.getElementById(id);
   const els = {
     loginView: $('login-view'), dashboardView: $('dashboard-view'),
-    password: $('password'), btnLogin: $('btn-login'), loginError: $('login-error'),
+    email: $('email'), password: $('password'), btnLogin: $('btn-login'), loginError: $('login-error'),
     mois: $('mois'), dashError: $('dash-error'), tableWrap: $('table-wrap'), empty: $('empty'),
   };
 
-  let currentPassword = '';
+  let currentToken = '';
   let pollTimer = null;
   let expandedSalarie = null;
   let lastList = [];
-  const SESSION_KEY = 'fraisKm:adminPassword';
+  const SESSION_KEY = 'fraisKm:sessionToken';
 
   function todayMonth(){
     const d = new Date();
@@ -152,7 +161,7 @@
   async function fetchSalaries(){
     const mois = els.mois.value || todayMonth();
     try{
-      const res = await fetch('/api/salaries?mois=' + encodeURIComponent(mois) + '&password=' + encodeURIComponent(currentPassword));
+      const res = await fetch('/api/salaries?mois=' + encodeURIComponent(mois) + '&token=' + encodeURIComponent(currentToken));
       if(res.status === 401){
         stopPolling();
         sessionStorage.removeItem(SESSION_KEY);
@@ -276,14 +285,36 @@
     if(pollTimer){ clearInterval(pollTimer); pollTimer = null; }
   }
 
-  async function tryLogin(password){
-    currentPassword = password;
+  async function tryLogin(email, password, tokenDejaValide){
     els.loginError.style.display = 'none';
+    let token = tokenDejaValide;
+    if(!token){
+      let data;
+      try{
+        const res = await fetch('/api/auth/login', {
+          method: 'POST', headers: {'Content-Type':'application/json'},
+          body: JSON.stringify({ email, password })
+        });
+        data = await res.json().catch(()=>({}));
+        if(!res.ok){
+          els.loginError.style.display = 'block';
+          els.loginError.textContent = data.error || 'Erreur de connexion.';
+          return;
+        }
+      }catch(e){
+        els.loginError.style.display = 'block';
+        els.loginError.textContent = 'Erreur de connexion.';
+        return;
+      }
+      token = data.token;
+    }
+    currentToken = token;
     const mois = els.mois.value || todayMonth();
-    const res = await fetch('/api/salaries?mois=' + encodeURIComponent(mois) + '&password=' + encodeURIComponent(password));
+    const res = await fetch('/api/salaries?mois=' + encodeURIComponent(mois) + '&token=' + encodeURIComponent(token));
     if(res.status === 401){
+      sessionStorage.removeItem(SESSION_KEY);
       els.loginError.style.display = 'block';
-      els.loginError.textContent = 'Mot de passe incorrect.';
+      els.loginError.textContent = 'Session expirée, merci de vous reconnecter.';
       return;
     }
     const data = await res.json().catch(()=>null);
@@ -292,7 +323,7 @@
       els.loginError.textContent = (data && data.error) || 'Erreur de connexion.';
       return;
     }
-    sessionStorage.setItem(SESSION_KEY, password);
+    sessionStorage.setItem(SESSION_KEY, token);
     els.loginView.style.display = 'none';
     els.dashboardView.style.display = 'block';
     lastList = data;
@@ -301,9 +332,10 @@
   }
 
   els.btnLogin.addEventListener('click', () => {
+    const email = els.email.value.trim();
     const pwd = els.password.value.trim();
-    if(!pwd) return;
-    tryLogin(pwd);
+    if(!email || !pwd) return;
+    tryLogin(email, pwd, null);
   });
   els.password.addEventListener('keydown', (e) => {
     if(e.key === 'Enter') els.btnLogin.click();
@@ -313,7 +345,7 @@
   (function init(){
     if(!els.mois.value) els.mois.value = todayMonth();
     const saved = sessionStorage.getItem(SESSION_KEY);
-    if(saved) tryLogin(saved);
+    if(saved) tryLogin(null, null, saved);
   })();
 })();
 </script>
