@@ -1,4 +1,5 @@
 const { getPool, ensureSchema } = require('../lib/db');
+const { verifyToken } = require('../lib/sessionToken');
 
 function calcForfait(km) {
   if (km <= 20.99) return 2;
@@ -12,15 +13,16 @@ module.exports = async (req, res) => {
     return;
   }
 
-  const { mois, password } = req.query;
+  const { mois, token } = req.query;
 
-  const adminPassword = process.env.ADMIN_PASSWORD;
-  if (!adminPassword) {
-    res.status(500).json({ error: "Variable ADMIN_PASSWORD non configurée côté serveur" });
-    return;
+  let email;
+  try {
+    email = verifyToken(token);
+  } catch (e) {
+    email = null;
   }
-  if (!password || password !== adminPassword) {
-    res.status(401).json({ error: 'Mot de passe incorrect' });
+  if (!email) {
+    res.status(401).json({ error: 'Session invalide ou expirée' });
     return;
   }
   if (!mois) {
