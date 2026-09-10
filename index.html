@@ -481,12 +481,21 @@
       <div class="section-label"><span class="dot"></span>Accès direction</div>
       <div class="field-row" style="margin-top:12px;">
         <div class="field">
-          <label for="dir-password">Mot de passe direction</label>
+          <label for="dir-email">Adresse email</label>
+          <input type="email" id="dir-email" placeholder="prenom.nom@aidaux.fr">
+        </div>
+      </div>
+      <div class="field-row" style="margin-top:10px;">
+        <div class="field">
+          <label for="dir-password">Mot de passe</label>
           <input type="password" id="dir-password" placeholder="••••••••">
         </div>
       </div>
       <div id="dir-login-error" class="error-box" style="display:none; margin-top:10px;"></div>
       <button class="btn btn-login" id="dir-btn-login" type="button">Se connecter</button>
+      <div style="text-align:center; margin-top:10px; font-size:13px;">
+        <a href="/reset.html">Mot de passe oublié / première connexion</a>
+      </div>
     </div>
 
     <div class="card" id="dir-dashboard-view" style="display:none;">
@@ -887,17 +896,17 @@
   const $ = (id) => document.getElementById(id);
   const els = {
     loginView: $('dir-login-view'), dashboardView: $('dir-dashboard-view'),
-    password: $('dir-password'), btnLogin: $('dir-btn-login'), loginError: $('dir-login-error'),
+    email: $('dir-email'), password: $('dir-password'), btnLogin: $('dir-btn-login'), loginError: $('dir-login-error'),
     mois: $('dir-mois'), dashError: $('dir-dash-error'), tableWrap: $('dir-table-wrap'), empty: $('dir-empty'),
     btnPrint: $('dir-btn-print'), btnCsv: $('dir-btn-csv'), toast: $('toast'),
   };
 
-  let currentPassword = '';
+  let currentToken = '';
   let pollTimer = null;
   let expandedSalarie = null;
   let lastList = [];
   let isActive = false;
-  const SESSION_KEY = 'fraisKm:adminPassword';
+  const SESSION_KEY = 'fraisKm:sessionToken';
 
   function todayMonth(){
     const d = new Date();
@@ -920,10 +929,10 @@
   async function fetchSalaries(){
     const mois = els.mois.value || todayMonth();
     try{
-      const res = await fetch('/api/salaries?mois=' + encodeURIComponent(mois) + '&password=' + encodeURIComponent(currentPassword));
+      const res = await fetch('/api/salaries?mois=' + encodeURIComponent(mois) + '&token=' + encodeURIComponent(currentToken));
       if(res.status === 401){
         stopPolling();
-        currentPassword = '';
+        currentToken = '';
         sessionStorage.removeItem(SESSION_KEY);
         els.dashboardView.style.display = 'none';
         els.loginView.style.display = 'block';
@@ -1045,22 +1054,42 @@
     if(pollTimer){ clearInterval(pollTimer); pollTimer = null; }
   }
 
-  async function tryLogin(password){
-    currentPassword = password;
+  async function tryLogin(email, password, tokenDejaValide){
     els.loginError.style.display = 'none';
+    let token = tokenDejaValide;
+    if(!token){
+      let data;
+      try{
+        const resLogin = await fetch('/api/auth/login', {
+          method: 'POST', headers: {'Content-Type':'application/json'},
+          body: JSON.stringify({ email, password })
+        });
+        data = await resLogin.json().catch(()=>({}));
+        if(!resLogin.ok){
+          els.loginError.style.display = 'block';
+          els.loginError.textContent = data.error || 'Erreur de connexion.';
+          return;
+        }
+      }catch(e){
+        els.loginError.style.display = 'block';
+        els.loginError.textContent = 'Connexion impossible, réessayez.';
+        return;
+      }
+      token = data.token;
+    }
     const mois = els.mois.value || todayMonth();
     let res;
     try{
-      res = await fetch('/api/salaries?mois=' + encodeURIComponent(mois) + '&password=' + encodeURIComponent(password));
+      res = await fetch('/api/salaries?mois=' + encodeURIComponent(mois) + '&token=' + encodeURIComponent(token));
     }catch(e){
       els.loginError.style.display = 'block';
       els.loginError.textContent = 'Connexion impossible, réessayez.';
       return;
     }
     if(res.status === 401){
-      currentPassword = '';
+      sessionStorage.removeItem(SESSION_KEY);
       els.loginError.style.display = 'block';
-      els.loginError.textContent = 'Mot de passe incorrect.';
+      els.loginError.textContent = 'Session expirée, merci de vous reconnecter.';
       return;
     }
     const data = await res.json().catch(()=>null);
@@ -1069,7 +1098,8 @@
       els.loginError.textContent = (data && data.error) || 'Erreur de connexion.';
       return;
     }
-    sessionStorage.setItem(SESSION_KEY, password);
+    currentToken = token;
+    sessionStorage.setItem(SESSION_KEY, token);
     els.loginView.style.display = 'none';
     els.dashboardView.style.display = 'block';
     lastList = data;
@@ -1099,14 +1129,15 @@
   }
 
   els.btnLogin.addEventListener('click', () => {
+    const email = els.email.value.trim();
     const pwd = els.password.value.trim();
-    if(!pwd) return;
-    tryLogin(pwd);
+    if(!email || !pwd) return;
+    tryLogin(email, pwd, null);
   });
   els.password.addEventListener('keydown', (e) => {
     if(e.key === 'Enter') els.btnLogin.click();
   });
-  els.mois.addEventListener('change', () => { if(currentPassword) fetchSalaries(); });
+  els.mois.addEventListener('change', () => { if(currentToken) fetchSalaries(); });
   if(els.btnPrint) els.btnPrint.addEventListener('click', () => window.print());
   if(els.btnCsv) els.btnCsv.addEventListener('click', exportCsv);
 
@@ -1115,11 +1146,11 @@
     activate(){
       isActive = true;
       if(!els.mois.value) els.mois.value = todayMonth();
-      if(currentPassword){
+      if(currentToken){
         startPolling();
       } else {
         const saved = sessionStorage.getItem(SESSION_KEY);
-        if(saved) tryLogin(saved);
+        if(saved) tryLogin(null, null, saved);
       }
     },
     deactivate(){
