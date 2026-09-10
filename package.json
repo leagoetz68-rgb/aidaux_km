@@ -3,6 +3,9 @@
   "version": "1.0.0",
   "private": true,
   "description": "Suivi des frais kilométriques - AID'Aux",
+  "engines": {
+    "node": ">=18"
+  },
   "dependencies": {
     "pg": "^8.11.5"
   }
