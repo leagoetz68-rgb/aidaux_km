@@ -1,0 +1,152 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Mot de passe — AID'Aux</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@600;700&family=IBM+Plex+Sans:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --bg:#F3F5FA; --surface:#FFFFFF; --ink:#182449; --ink-soft:#5B6690;
+    --navy:#1B2A6B; --teal:#13B3B3; --coral:#E8583A;
+    --line:#DDE1EF; --radius:14px;
+    --shadow:0 1px 2px rgba(27,42,107,0.06), 0 8px 24px -12px rgba(27,42,107,0.20);
+    --font-display:'Space Grotesk',sans-serif; --font-body:'IBM Plex Sans',sans-serif;
+  }
+  *{box-sizing:border-box;}
+  body{ margin:0; font-family:var(--font-body); background:var(--bg); color:var(--ink);
+        display:flex; justify-content:center; align-items:flex-start; min-height:100vh; padding:60px 16px; }
+  .card{ background:var(--surface); border-radius:var(--radius); box-shadow:var(--shadow);
+         padding:28px; width:100%; max-width:380px; }
+  h1{ font-family:var(--font-display); font-size:20px; color:var(--navy); margin:0 0 6px; }
+  p.sub{ color:var(--ink-soft); font-size:13.5px; margin:0 0 20px; }
+  label{ font-size:12px; font-weight:600; color:var(--ink-soft); display:block; margin:0 0 6px; }
+  input{ font-family:var(--font-body); font-size:14px; padding:10px 12px; border-radius:10px;
+         border:1.5px solid var(--line); background:#FCFDFF; color:var(--ink); width:100%; margin-bottom:14px; }
+  input:focus{ outline:none; border-color:var(--teal); }
+  button{ width:100%; font-family:var(--font-body); font-weight:600; font-size:14px; padding:11px 16px;
+          border-radius:10px; border:none; cursor:pointer; background:var(--navy); color:white; }
+  button:hover{ background:var(--teal); }
+  button:disabled{ opacity:0.6; cursor:not-allowed; }
+  .error-box{ background:#FDEAE4; color:#8a3220; border-radius:10px; padding:10px 14px; font-size:13px; margin-bottom:14px; }
+  .ok-box{ background:#E1F6F5; color:#0d6b63; border-radius:10px; padding:10px 14px; font-size:13px; margin-bottom:14px; }
+  .links{ margin-top:16px; font-size:13px; text-align:center; }
+  .links a{ color:var(--navy); text-decoration:none; }
+  .links a:hover{ text-decoration:underline; }
+</style>
+</head>
+<body>
+<div class="card" id="card"></div>
+
+<script>
+(function(){
+  const params = new URLSearchParams(location.search);
+  const token = params.get('token');
+  const card = document.getElementById('card');
+
+  function renderDemande(){
+    card.innerHTML = `
+      <h1>AID'Aux</h1>
+      <p class="sub">Recevez un lien par email pour définir votre mot de passe (frais kilométriques).</p>
+      <div id="msg"></div>
+      <label for="email">Votre adresse email professionnelle</label>
+      <input type="email" id="email" autofocus required>
+      <button id="btn">Recevoir le lien</button>
+      <div class="links"><a href="/admin.html">Retour à la connexion</a></div>
+    `;
+    const msg = document.getElementById('msg');
+    document.getElementById('btn').addEventListener('click', async () => {
+      const email = document.getElementById('email').value.trim();
+      if(!email) return;
+      msg.innerHTML = '';
+      const btn = document.getElementById('btn');
+      btn.disabled = true;
+      try{
+        const res = await fetch('/api/auth/request-reset', {
+          method: 'POST', headers: {'Content-Type':'application/json'},
+          body: JSON.stringify({ email })
+        });
+        const data = await res.json().catch(()=>({}));
+        if(!res.ok){
+          msg.innerHTML = `<div class="error-box">${data.error || 'Erreur.'}</div>`;
+          btn.disabled = false;
+          return;
+        }
+        msg.innerHTML = '<div class="ok-box">Un email vient de vous être envoyé avec un lien pour définir votre mot de passe. Pensez à vérifier vos spams.</div>';
+      }catch(e){
+        msg.innerHTML = '<div class="error-box">Erreur de connexion.</div>';
+        btn.disabled = false;
+      }
+    });
+  }
+
+  async function renderDefinir(){
+    card.innerHTML = '<p class="sub">Vérification du lien...</p>';
+    let email;
+    try{
+      const res = await fetch('/api/auth/set-password?token=' + encodeURIComponent(token));
+      const data = await res.json();
+      if(!res.ok){
+        card.innerHTML = `
+          <h1>Lien invalide</h1>
+          <div class="error-box">${data.error || "Ce lien n'est plus valable."}</div>
+          <div class="links"><a href="/reset.html">Demander un nouveau lien</a></div>
+        `;
+        return;
+      }
+      email = data.email;
+    }catch(e){
+      card.innerHTML = '<div class="error-box">Erreur de connexion.</div>';
+      return;
+    }
+    card.innerHTML = `
+      <h1>Définir le mot de passe</h1>
+      <p class="sub">Compte : ${email}</p>
+      <div id="msg"></div>
+      <label for="p1">Nouveau mot de passe (min. 8 caractères)</label>
+      <input type="password" id="p1" autofocus required>
+      <label for="p2">Confirmer le mot de passe</label>
+      <input type="password" id="p2" required>
+      <button id="btn">Enregistrer</button>
+    `;
+    const msg = document.getElementById('msg');
+    document.getElementById('btn').addEventListener('click', async () => {
+      const p1 = document.getElementById('p1').value;
+      const p2 = document.getElementById('p2').value;
+      msg.innerHTML = '';
+      const btn = document.getElementById('btn');
+      btn.disabled = true;
+      try{
+        const res = await fetch('/api/auth/set-password', {
+          method: 'POST', headers: {'Content-Type':'application/json'},
+          body: JSON.stringify({ token, password: p1, password2: p2 })
+        });
+        const data = await res.json().catch(()=>({}));
+        if(!res.ok){
+          msg.innerHTML = `<div class="error-box">${data.error || 'Erreur.'}</div>`;
+          btn.disabled = false;
+          return;
+        }
+        card.innerHTML = `
+          <h1>C'est fait !</h1>
+          <div class="ok-box">Votre mot de passe a bien été enregistré.</div>
+          <div class="links"><a href="/admin.html">Se connecter</a></div>
+        `;
+      }catch(e){
+        msg.innerHTML = '<div class="error-box">Erreur de connexion.</div>';
+        btn.disabled = false;
+      }
+    });
+  }
+
+  if(token){
+    renderDefinir();
+  }else{
+    renderDemande();
+  }
+})();
+</script>
+</body>
+</html>
