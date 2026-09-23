@@ -179,6 +179,21 @@
   .calc-status{
     display:block; font-size:11px; color: var(--ink-soft); margin-top:4px; min-height:14px;
   }
+  .calc-status.ok{ color: var(--teal); }
+  .calc-status.err{ color: var(--danger); }
+  .calc-status .route{ display:block; color: var(--ink-soft); margin-top:2px; }
+  .field{ position: relative; }
+  .ac-list{
+    position:absolute; top:100%; left:0; right:0; z-index:50; margin-top:4px;
+    background: var(--surface); border:1px solid var(--line); border-radius:10px;
+    box-shadow: var(--shadow); max-height:260px; overflow-y:auto; display:none;
+  }
+  .ac-list.open{ display:block; }
+  .ac-item{ padding:9px 12px; font-size:13px; cursor:pointer; border-bottom:1px solid var(--line); }
+  .ac-item:last-child{ border-bottom:none; }
+  .ac-item.active, .ac-item:hover{ background: var(--teal-wash); }
+  .ac-item small{ display:block; color: var(--ink-soft); font-size:11px; }
+  input.addr-ok{ border-color: var(--teal) !important; }
 
   .btn{
     font-family: var(--font-body); font-weight:600; font-size:14px;
@@ -599,9 +614,8 @@
     try{
       const res = await fetch('/api/settings?salarie=' + encodeURIComponent(salarie));
       const data = await res.json();
-      if(data && data.domicile !== undefined){
-        els.domicile.value = data.domicile || '';
-      }
+      // setAddr remet aussi à zéro les coordonnées du salarié précédent
+      setAddr(els.domicile, (data && data.domicile) || '');
     }catch(e){ /* pas de réglages pour ce salarié */ }
   }
 
@@ -745,10 +759,11 @@
       await loadEntries();
       showToast('Trajet ajouté ✓');
       els.fKm.value = '';
-      els.fArrivee.value = '';
+      setAddr(els.fArrivee, '');
       els.fRetourKm.value = '';
-      els.fRetourArrivee.value = '';
-      els.fRetourDepart.value = '';
+      setAddr(els.fRetourArrivee, '');
+      setAddr(els.fRetourDepart, '');
+      els.allerCalcStatus.textContent = ''; els.retourCalcStatus.textContent = '';
       els.fKm.focus();
     }catch(e){
       showToast("Échec de l'enregistrement, réessayez");
@@ -760,41 +775,136 @@
     els.retourBlock.style.display = els.fHasRetour.checked ? 'block' : 'none';
   }
 
-  // --- Calcul automatique de la distance (OpenRouteService) ---
-  async function autoCalcKm(depart, arrivee, kmEl, statusEl){
+  // --- Adresses : autocomplétion BAN + coordonnées mémorisées sur le champ ---
+  // Quand le salarié choisit une suggestion, on garde les coordonnées exactes
+  // (data-lon / data-lat) : le calcul ne dépend plus d'une interprétation du texte.
+  function clearCoords(input){
+    delete input.dataset.lon; delete input.dataset.lat;
+    input.classList.remove('addr-ok');
+  }
+  function setAddr(input, label, lon, lat){
+    input.value = label || '';
+    if(lon != null && lat != null){
+      input.dataset.lon = lon; input.dataset.lat = lat;
+      input.classList.add('addr-ok');
+    } else {
+      clearCoords(input);
+    }
+  }
+  function copyAddr(from, to){
+    setAddr(to, from.value, from.dataset.lon, from.dataset.lat);
+  }
+
+  function attachAutocomplete(input){
+    const list = document.createElement('div');
+    list.className = 'ac-list';
+    input.parentNode.appendChild(list);
+    input.setAttribute('autocomplete', 'off');
+    let items = [], active = -1, timer = null, reqId = 0;
+
+    function close(){ list.classList.remove('open'); list.innerHTML = ''; items = []; active = -1; }
+    function highlight(i){
+      active = i;
+      [...list.children].forEach((el, j) => el.classList.toggle('active', j === i));
+    }
+    function choose(i){
+      const it = items[i]; if(!it) return;
+      setAddr(input, it.label, it.lon, it.lat);
+      close();
+      input.dispatchEvent(new Event('change'));
+    }
+    async function search(){
+      const q = input.value.trim();
+      if(q.length < 3){ close(); return; }
+      const my = ++reqId;
+      try{
+        const res = await fetch('/api/adresse?q=' + encodeURIComponent(q));
+        const data = await res.json();
+        if(my !== reqId || document.activeElement !== input) return;
+        items = Array.isArray(data) ? data : [];
+        if(items.length === 0){ close(); return; }
+        list.innerHTML = items.map((it, i) =>
+          `<div class="ac-item" data-i="${i}">${escapeHtml(it.label)}${it.type === 'street' ? '<small>rue entière (numéro non référencé)</small>' : ''}</div>`
+        ).join('');
+        list.classList.add('open');
+        active = -1;
+      }catch(e){ close(); }
+    }
+    // mousedown + preventDefault : le champ garde le focus, donc pas de
+    // "change" prématuré avec un texte à moitié tapé.
+    list.addEventListener('mousedown', (e) => {
+      const el = e.target.closest('.ac-item'); if(!el) return;
+      e.preventDefault();
+      choose(Number(el.dataset.i));
+    });
+    input.addEventListener('input', () => {
+      clearCoords(input);
+      clearTimeout(timer);
+      timer = setTimeout(search, 250);
+    });
+    input.addEventListener('keydown', (e) => {
+      if(!list.classList.contains('open')) return;
+      if(e.key === 'ArrowDown'){ e.preventDefault(); highlight(Math.min(active + 1, items.length - 1)); }
+      else if(e.key === 'ArrowUp'){ e.preventDefault(); highlight(Math.max(active - 1, 0)); }
+      else if(e.key === 'Enter'){ if(active >= 0){ e.preventDefault(); choose(active); } }
+      else if(e.key === 'Escape'){ close(); }
+    });
+    input.addEventListener('blur', () => setTimeout(close, 150));
+  }
+
+  // --- Calcul automatique de la distance (BAN + itinéraire IGN) ---
+  const calcSeq = new WeakMap();
+  async function autoCalcKm(departEl, arriveeEl, kmEl, statusEl){
+    const depart = departEl.value.trim(), arrivee = arriveeEl.value.trim();
     if(!depart || !arrivee) return;
-    if(statusEl) statusEl.textContent = 'Calcul de la distance...';
+    const my = (calcSeq.get(kmEl) || 0) + 1;
+    calcSeq.set(kmEl, my);
+    const setStatus = (html, cls) => { if(statusEl){ statusEl.innerHTML = html; statusEl.className = 'calc-status ' + (cls || ''); } };
+    setStatus('Calcul de la distance...');
+    const params = new URLSearchParams({ depart, arrivee });
+    if(departEl.dataset.lon){ params.set('dlon', departEl.dataset.lon); params.set('dlat', departEl.dataset.lat); }
+    if(arriveeEl.dataset.lon){ params.set('alon', arriveeEl.dataset.lon); params.set('alat', arriveeEl.dataset.lat); }
     try{
-      const res = await fetch('/api/distance?depart=' + encodeURIComponent(depart) + '&arrivee=' + encodeURIComponent(arrivee));
+      const res = await fetch('/api/distance?' + params.toString());
       const data = await res.json();
+      if(calcSeq.get(kmEl) !== my) return; // une saisie plus récente a pris le relais
       if(res.ok && typeof data.km === 'number'){
         kmEl.value = String(data.km);
-        if(statusEl) statusEl.textContent = `Distance calculée : ${String(data.km).replace('.', ',')} km`;
+        const warn = (data.warnings || []).length ? `<span class="route">⚠ ${escapeHtml(data.warnings.join(' ; '))}</span>` : '';
+        setStatus(
+          `Distance calculée : ${String(data.km).replace('.', ',')} km` +
+          `<span class="route">${escapeHtml(data.depart)} → ${escapeHtml(data.arrivee)}</span>` + warn,
+          'ok'
+        );
       } else {
-        if(statusEl) statusEl.textContent = (data.error || "Distance non trouvée") + " — renseignez le km manuellement";
+        kmEl.value = '';
+        setStatus(escapeHtml(data.error || 'Distance non trouvée') + ' — sinon, renseignez le km manuellement', 'err');
       }
     }catch(e){
-      if(statusEl) statusEl.textContent = "Calcul indisponible, merci de renseigner le km manuellement";
+      if(calcSeq.get(kmEl) !== my) return;
+      setStatus('Calcul indisponible, merci de renseigner le km manuellement', 'err');
     }
   }
 
   function maybeAutoCalc(departEl, arriveeEl, kmEl, statusEl){
-    autoCalcKm(departEl.value.trim(), arriveeEl.value.trim(), kmEl, statusEl);
+    autoCalcKm(departEl, arriveeEl, kmEl, statusEl);
   }
 
   function copyRetourFromAller(){
-    els.fRetourDepart.value = els.fArrivee.value;
-    els.fRetourArrivee.value = els.fDepart.value;
+    copyAddr(els.fArrivee, els.fRetourDepart);
+    copyAddr(els.fDepart, els.fRetourArrivee);
     els.fRetourKm.value = els.fKm.value;
     maybeAutoCalc(els.fRetourDepart, els.fRetourArrivee, els.fRetourKm, els.retourCalcStatus);
   }
 
   function swapAddresses(){
-    const d = els.fDepart.value;
-    els.fDepart.value = els.fArrivee.value;
-    els.fArrivee.value = d;
+    const tmp = { value: els.fDepart.value, dataset: { ...els.fDepart.dataset } };
+    copyAddr(els.fArrivee, els.fDepart);
+    copyAddr(tmp, els.fArrivee);
     maybeAutoCalc(els.fDepart, els.fArrivee, els.fKm, els.allerCalcStatus);
   }
+
+  [els.domicile, els.fDepart, els.fArrivee, els.fRetourDepart, els.fRetourArrivee].forEach(attachAutocomplete);
 
   function exportCsv(){
     if(entries.length === 0){ showToast('Aucun trajet à exporter'); return; }
@@ -866,12 +976,12 @@
   els.salarie.addEventListener('change', async () => {
     localStorage.setItem(LAST_SALARIE_KEY, currentSalarie());
     await loadDomicile();
-    if(!els.fDepart.value) els.fDepart.value = els.domicile.value;
+    if(!els.fDepart.value) copyAddr(els.domicile, els.fDepart);
     await loadEntries();
   });
   els.domicile.addEventListener('change', async () => {
     await saveDomicile();
-    if(!els.fDepart.value) els.fDepart.value = els.domicile.value;
+    if(!els.fDepart.value) copyAddr(els.domicile, els.fDepart);
   });
   els.mois.addEventListener('change', loadEntries);
 
@@ -886,7 +996,7 @@
     const lastSalarie = localStorage.getItem(LAST_SALARIE_KEY);
     if(lastSalarie) els.salarie.value = lastSalarie;
     await loadDomicile();
-    if(!els.fDepart.value) els.fDepart.value = els.domicile.value;
+    if(!els.fDepart.value) copyAddr(els.domicile, els.fDepart);
     await loadEntries();
   })();
 })();
