@@ -1,4 +1,4 @@
-[README (2).md](https://github.com/user-attachments/files/32555390/README.2.md)
+[README (3).md](https://github.com/user-attachments/files/32556151/README.3.md)
 [README.md](https://github.com/user-attachments/files/32053924/README.md)
 # Frais Kilométriques — AID'Aux (Vercel)
 
@@ -74,5 +74,8 @@ Les tables sont créées automatiquement au premier appel à l'API — pas besoi
   (bordure turquoise) est calculée à partir de ses coordonnées exactes.
 - `ROUTE_OPTIMIZATION` (optionnelle) : `fastest` par défaut (itinéraire conseillé, comme
   Google Maps / Mappy) ou `shortest` (plus court en km).
+- `GOOGLE_MAPS_API_KEY` (optionnelle) : si elle est présente, les km sont calculés par
+  Google (Routes API, sans trafic) pour correspondre à Google Maps ; l'IGN prend le relais
+  si Google ne répond pas. Les adresses restent validées par la Base Adresse Nationale.
 - `ORS_API_KEY` n'est plus obligatoire : si elle est présente, OpenRouteService sert de
   secours quand le service IGN ne répond pas.
