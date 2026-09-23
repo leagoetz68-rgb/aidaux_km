@@ -1,72 +1,16 @@
-// Calcule la distance routière (en km, itinéraire le plus rapide) entre
-// deux adresses, via l'API OpenRouteService (hébergée par HeiGIT).
-// Deux étapes : geocoder chaque adresse en coordonnées (Pelias), puis
-// demander l'itinéraire routier entre ces deux points (Directions).
+// Calcule la distance routière (km) entre deux adresses.
+// Le front envoie de préférence les coordonnées de l'adresse choisie dans
+// les suggestions (dlon/dlat, alon/alat) ; sinon on géocode le texte côté
+// serveur, en refusant les correspondances vagues ou incertaines.
 
-const GEOCODE_URL = "https://api.heigit.org/pelias/v1/search";
-const DIRECTIONS_URL = "https://api.heigit.org/openrouteservice/v2/directions/driving-car";
+const { geocodeStrict, routeDistanceKm } = require("../lib/geo");
 
-// Point de référence pour aider le géocodeur à privilégier les résultats
-// de la région (Strasbourg / Eurométropole) en cas d'adresse ambiguë.
-const FOCUS_LAT = 48.5734;
-const FOCUS_LON = 7.7521;
-
-// Délai maximum par appel externe : évite qu'une requête qui traîne fasse
-// planter toute la fonction en silence (timeout Vercel, réponse 502 opaque).
-const FETCH_TIMEOUT_MS = 8000;
-
-async function fetchWithTimeout(url, options = {}) {
-  const controller = new AbortController();
-  const timeout = setTimeout(() => controller.abort(), FETCH_TIMEOUT_MS);
-  try {
-    return await fetch(url, { ...options, signal: controller.signal });
-  } catch (e) {
-    if (e.name === "AbortError") {
-      throw new Error(`Délai dépassé (${FETCH_TIMEOUT_MS / 1000}s) en appelant ${url}`);
-    }
-    throw e;
-  } finally {
-    clearTimeout(timeout);
-  }
-}
-
-async function geocode(text, apiKey) {
-  const url = `${GEOCODE_URL}?api_key=${encodeURIComponent(apiKey)}&text=${encodeURIComponent(text)}&size=1&focus.point.lat=${FOCUS_LAT}&focus.point.lon=${FOCUS_LON}`;
-  const res = await fetchWithTimeout(url);
-  if (!res.ok) {
-    const body = await res.text().catch(() => "");
-    throw new Error(`Géocodage impossible (${res.status}) : ${body.slice(0, 300)}`);
-  }
-  const data = await res.json();
-  const feature = data.features && data.features[0];
-  if (!feature) {
-    throw new Error(`Adresse introuvable : ${text}`);
-  }
-  return feature.geometry.coordinates; // [lon, lat]
-}
-
-async function directionsDistanceKm(coordDepart, coordArrivee, apiKey) {
-  const res = await fetchWithTimeout(DIRECTIONS_URL, {
-    method: "POST",
-    headers: {
-      Authorization: apiKey,
-      "Content-Type": "application/json",
-    },
-    body: JSON.stringify({
-      coordinates: [coordDepart, coordArrivee],
-      preference: "fastest",
-    }),
-  });
-  if (!res.ok) {
-    const body = await res.text().catch(() => "");
-    throw new Error(`Calcul d'itinéraire impossible (${res.status}) : ${body.slice(0, 300)}`);
-  }
-  const data = await res.json();
-  const meters = data.routes && data.routes[0] && data.routes[0].summary && data.routes[0].summary.distance;
-  if (typeof meters !== "number") {
-    throw new Error("Réponse d'itinéraire invalide");
-  }
-  return meters / 1000;
+function coordsFromQuery(lon, lat, label) {
+  const x = Number(lon), y = Number(lat);
+  if (!Number.isFinite(x) || !Number.isFinite(y)) return null;
+  // Garde-fou : on reste en France métropolitaine.
+  if (x < -5.5 || x > 10 || y < 41 || y > 51.5) return null;
+  return { lon: x, lat: y, label, warning: null };
 }
 
 module.exports = async (req, res) => {
@@ -75,28 +19,27 @@ module.exports = async (req, res) => {
     return;
   }
 
-  const { depart, arrivee } = req.query;
+  const { depart, arrivee, dlon, dlat, alon, alat } = req.query;
   if (!depart || !arrivee) {
     res.status(400).json({ error: "Paramètres depart et arrivee requis" });
     return;
   }
 
-  const apiKey = process.env.ORS_API_KEY;
-  if (!apiKey) {
-    res.status(500).json({ error: "Clé ORS_API_KEY manquante côté serveur" });
-    return;
-  }
-
   try {
-    const [coordDepart, coordArrivee] = await Promise.all([
-      geocode(depart, apiKey),
-      geocode(arrivee, apiKey),
+    const [from, to] = await Promise.all([
+      coordsFromQuery(dlon, dlat, depart) || geocodeStrict(depart),
+      coordsFromQuery(alon, alat, arrivee) || geocodeStrict(arrivee),
     ]);
-    const km = await directionsDistanceKm(coordDepart, coordArrivee, apiKey);
-    res.status(200).json({ km: Math.round(km * 10) / 10 });
+    const { km, source } = await routeDistanceKm(from, to);
+    res.status(200).json({
+      km: Math.round(km * 10) / 10,
+      source,
+      depart: from.label,
+      arrivee: to.label,
+      warnings: [from.warning, to.warning].filter(Boolean),
+    });
   } catch (e) {
     console.error("Erreur calcul distance:", e.message);
-    res.status(502).json({ error: e.message || "Calcul de distance impossible" });
+    res.status(422).json({ error: e.message || "Calcul de distance impossible" });
   }
 };
-
