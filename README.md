@@ -1,3 +1,4 @@
+[README (2).md](https://github.com/user-attachments/files/32555390/README.2.md)
 [README.md](https://github.com/user-attachments/files/32053924/README.md)
 # Frais Kilométriques — AID'Aux (Vercel)
 
@@ -11,6 +12,9 @@ Aucune étape de build : tu peux tout gérer depuis l'éditeur web GitHub, comme
 - `reset.html` — page « mot de passe oublié / définir le mot de passe »
 - `api/trajets.js` — liste / ajoute / réinitialise les trajets d'un mois
 - `api/trajets/[id].js` — supprime un trajet précis
+- `api/distance.js` — calcule les km entre deux adresses (BAN + itinéraire IGN)
+- `api/adresse.js` — suggestions d'adresses pour l'autocomplétion
+- `lib/geo.js` — géocodage Base Adresse Nationale et calcul d'itinéraire IGN (Géoplateforme)
 - `api/settings.js` — lit / enregistre le domicile d'un salarié
 - `api/auth/login.js` — connexion (email + mot de passe) → jeton de session signé
 - `api/auth/request-reset.js` — envoie un lien de définition de mot de passe par email
@@ -59,3 +63,16 @@ Les tables sont créées automatiquement au premier appel à l'API — pas besoi
   individuel (email + mot de passe), avec un lien « mot de passe oublié / première
   connexion » qui envoie un email via Brevo — comme les autres applis AID'Aux. La saisie des
   trajets par les salariés (accueil) n'a pas de login, elle reste ouverte à tous.
+
+## Calcul des distances
+
+- Géocodage : Base Adresse Nationale via la Géoplateforme IGN (`data.geopf.fr/geocodage`),
+  gratuit et sans clé. Les adresses trop vagues (commune seule) ou incertaines sont refusées
+  avec un message clair au lieu de donner un faux kilométrage.
+- Itinéraire : service IGN `data.geopf.fr/navigation/itineraire` (réseau BD TOPO), sans clé.
+- Les champs d'adresse proposent des suggestions ; une adresse choisie dans la liste
+  (bordure turquoise) est calculée à partir de ses coordonnées exactes.
+- `ROUTE_OPTIMIZATION` (optionnelle) : `fastest` par défaut (itinéraire conseillé, comme
+  Google Maps / Mappy) ou `shortest` (plus court en km).
+- `ORS_API_KEY` n'est plus obligatoire : si elle est présente, OpenRouteService sert de
+  secours quand le service IGN ne répond pas.
