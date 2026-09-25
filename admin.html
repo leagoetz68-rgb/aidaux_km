@@ -3,7 +3,8 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Frais Kilométriques — Direction — AID'Aux</title>
+<title>Direction — Frais Kilométriques AID'Aux</title>
+<meta name="robots" content="noindex">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;600;700&family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@500;600&display=swap" rel="stylesheet">
@@ -14,12 +15,16 @@
     --ink: #182449;
     --ink-soft: #5B6690;
     --navy: #1B2A6B;
+    --navy-bright: #000F9F;
     --navy-wash: #E8EAF6;
     --teal: #13B3B3;
+    --teal-bright: #00BBB4;
     --teal-wash: #E1F6F5;
     --coral: #E8583A;
+    --coral-bright: #FF4713;
     --coral-wash: #FDEAE4;
     --line: #DDE1EF;
+    --danger: #C6503A;
     --radius: 14px;
     --shadow: 0 1px 2px rgba(27,42,107,0.06), 0 8px 24px -12px rgba(27,42,107,0.20);
     --font-display: 'Space Grotesk', sans-serif;
@@ -28,127 +33,385 @@
   }
   *{box-sizing:border-box;}
   body{
-    margin:0; font-family: var(--font-body); background: var(--bg); color: var(--ink);
+    margin:0;
+    font-family: var(--font-body);
+    background: var(--bg);
+    color: var(--ink);
     -webkit-font-smoothing: antialiased;
   }
-  .app{ max-width: 720px; margin: 0 auto; padding: 0 0 60px; }
+  .app{ max-width: 860px; margin: 0 auto; padding: 0 0 110px; }
+
+  /* Header */
   .hero{
     background: linear-gradient(155deg, var(--navy), var(--teal) 75%);
-    color: white; padding: 24px 20px 30px; border-radius: 0 0 22px 22px;
+    color: white;
+    padding: 28px 20px 34px;
+    border-radius: 0 0 22px 22px;
+    position: relative;
+    overflow: hidden;
   }
-  .hero h1{ font-family: var(--font-display); font-weight:700; font-size: 20px; margin:0 0 4px; }
-  .hero p{ margin:0; font-size:13px; opacity:0.85; }
+  .hero::after{
+    content:"";
+    position:absolute; right:-40px; top:-40px; width:180px; height:180px;
+    border-radius:50%;
+    background: radial-gradient(circle, rgba(232,88,58,0.40), transparent 70%);
+  }
+  .brand{ display:flex; align-items:center; gap:10px; margin-bottom: 18px; }
+  .brand-mark{
+    width:34px; height:34px; border-radius:10px;
+    background: var(--coral);
+    display:flex; align-items:center; justify-content:center;
+    font-family: var(--font-display); font-weight:700; color:white; font-size:16px;
+    flex-shrink:0;
+  }
+  .brand-name{ font-family: var(--font-display); font-weight:600; font-size:15px; letter-spacing:0.02em; opacity:0.95; }
+  .brand-sub{ font-size:11px; opacity:0.75; margin-top:1px; }
+  h1{
+    font-family: var(--font-display); font-weight:700; font-size: 22px;
+    margin: 0 0 4px; letter-spacing: -0.01em;
+  }
+  .hero p{ margin:0; font-size:13px; opacity:0.85; max-width: 50ch; }
+
+  /* Onglets Salarié / Direction */
+  .view-tabs{
+    display:flex; gap:6px;
+    background: var(--surface);
+    border-radius: 999px;
+    box-shadow: var(--shadow);
+    padding: 5px;
+    margin: -22px 16px 4px;
+    position: relative;
+    z-index: 3;
+  }
+  .view-tab{
+    flex:1;
+    font-family: var(--font-display); font-weight:600; font-size:13.5px;
+    color: var(--ink-soft); background: transparent; border:none; cursor:pointer;
+    padding: 11px 12px; border-radius: 999px;
+    display:inline-flex; align-items:center; justify-content:center; gap:7px;
+    transition: background 0.15s, color 0.15s;
+  }
+  .view-tab:hover{ color: var(--navy); }
+  .view-tab.active{ background: var(--navy); color: white; }
+
+  /* Sections */
   .card{
-    background: var(--surface); border-radius: var(--radius); box-shadow: var(--shadow);
-    padding: 18px; margin: -18px 16px 16px; position: relative; z-index:2;
+    background: var(--surface);
+    border-radius: var(--radius);
+    box-shadow: var(--shadow);
+    padding: 18px;
+    margin: 16px 16px;
+    position: relative;
+    z-index: 2;
   }
-  .field-row{ display:flex; gap:10px; align-items:flex-end; flex-wrap:wrap; }
-  .field{ flex:1; min-width:140px; display:flex; flex-direction:column; gap:6px; }
+  #view-salarie > .card:first-child{ margin-top: 12px; }
+  .card + .card{ margin-top: 16px; }
+  .section-header-row{ display:flex; align-items:center; justify-content:space-between; gap:10px; flex-wrap:wrap; margin-bottom:12px; }
+  .section-label{
+    font-family: var(--font-display); font-weight:600; font-size: 13px;
+    color: var(--navy); text-transform: uppercase; letter-spacing: 0.06em;
+    margin: 0;
+    display:flex; align-items:center; gap:8px;
+  }
+  .section-label .dot{ width:6px;height:6px;border-radius:50%; background:var(--coral); }
+
+  .tab-btn{
+    font-family: var(--font-body); font-weight:600; font-size:12px;
+    color: var(--teal); background: var(--teal-wash); border: 1px solid transparent;
+    padding: 6px 11px; border-radius: 20px; cursor:pointer;
+  }
+  .tab-btn:hover{ background: var(--teal); color:white; }
+
+  .bareme-panel{
+    background: var(--navy-wash); border-radius: 10px; padding: 12px 14px; margin-bottom: 14px;
+  }
+  .bareme-row{ display:flex; align-items:center; justify-content:space-between; font-size:13px; padding: 4px 0; color: var(--ink); }
+  .bareme-row strong{ font-family: var(--font-mono); color: var(--navy); }
+  .bareme-note{ font-size:11.5px; color: var(--ink-soft); margin: 8px 0 0; }
+
+  .field-row{ display:flex; gap:10px; flex-wrap: wrap; }
+  .field{ flex:1; min-width: 140px; display:flex; flex-direction:column; gap:6px; }
   label{ font-size:12px; font-weight:600; color: var(--ink-soft); }
-  input{
-    font-family: var(--font-body); font-size:14px; padding:10px 12px; border-radius:10px;
-    border:1.5px solid var(--line); background:#FCFDFF; color:var(--ink); width:100%;
+  input, select{
+    font-family: var(--font-body);
+    font-size: 14px;
+    padding: 10px 12px;
+    border-radius: 10px;
+    border: 1.5px solid var(--line);
+    background: #FCFDFF;
+    color: var(--ink);
+    width:100%;
+    transition: border-color 0.15s;
   }
-  input:focus{ outline:none; border-color:var(--teal); box-shadow:0 0 0 3px var(--teal-wash); }
+  input:focus, select:focus{
+    outline: none;
+    border-color: var(--teal);
+    box-shadow: 0 0 0 3px var(--teal-wash);
+  }
+  input[type="number"]{ font-family: var(--font-mono); }
+
+  .swap-btn{
+    align-self:center;
+    width:36px; height:36px; border-radius:10px;
+    border: 1.5px solid var(--line);
+    background: white;
+    display:flex; align-items:center; justify-content:center;
+    cursor:pointer; flex-shrink:0;
+    color: var(--navy);
+    margin-top: 18px;
+    transition: background 0.15s, transform 0.15s;
+  }
+  .swap-btn:hover{ background: var(--teal-wash); transform: rotate(180deg); }
+
+  .checkbox-row{
+    display:flex; align-items:center; gap:8px; margin-top:12px; font-size:13px; color: var(--ink-soft);
+  }
+  .checkbox-row input{ width:16px; height:16px; accent-color: var(--teal); }
+
+  .leg-block{
+    background: #FAFBFF; border: 1.5px dashed var(--line); border-radius: 12px;
+    padding: 12px; margin-top: 10px;
+  }
+  .leg-block-title{
+    font-family: var(--font-display); font-weight:600; font-size:12px;
+    color: var(--navy); text-transform:uppercase; letter-spacing:0.04em; margin-bottom:10px;
+    display:flex; align-items:center;
+  }
+  .calc-status{
+    display:block; font-size:11px; color: var(--ink-soft); margin-top:4px; min-height:14px;
+  }
+  .calc-status.ok{ color: var(--teal); }
+  .calc-status.err{ color: var(--danger); }
+  .calc-status .route{ display:block; color: var(--ink-soft); margin-top:2px; }
+  .field{ position: relative; }
+  .ac-list{
+    position:absolute; top:100%; left:0; right:0; z-index:50; margin-top:4px;
+    background: var(--surface); border:1px solid var(--line); border-radius:10px;
+    box-shadow: var(--shadow); max-height:260px; overflow-y:auto; display:none;
+  }
+  .ac-list.open{ display:block; }
+  .ac-item{ padding:9px 12px; font-size:13px; cursor:pointer; border-bottom:1px solid var(--line); }
+  .ac-item:last-child{ border-bottom:none; }
+  .ac-item.active, .ac-item:hover{ background: var(--teal-wash); }
+  .ac-item small{ display:block; color: var(--ink-soft); font-size:11px; }
+  input.addr-ok{ border-color: var(--teal) !important; }
+
   .btn{
-    font-family: var(--font-body); font-weight:600; font-size:14px; padding:11px 16px;
-    border-radius:10px; border:none; cursor:pointer; background: var(--teal); color:white;
+    font-family: var(--font-body); font-weight:600; font-size:14px;
+    padding: 11px 16px; border-radius: 10px; border:none; cursor:pointer;
+    display:inline-flex; align-items:center; justify-content:center; gap:6px;
+    transition: transform 0.1s, opacity 0.15s, background 0.15s;
   }
-  .btn:hover{ background: var(--navy); }
+  .btn:active{ transform: scale(0.98); }
   .btn:disabled{ opacity:0.6; cursor:not-allowed; }
-  .status-row{ display:flex; align-items:center; justify-content:space-between; margin-bottom:12px; flex-wrap:wrap; gap:8px; }
-  .live-dot{ display:inline-flex; align-items:center; gap:6px; font-size:11px; color: var(--ink-soft); }
-  .live-dot .dot{ width:7px; height:7px; border-radius:50%; background:var(--teal); animation: pulse 1.6s infinite; }
-  @keyframes pulse{ 0%,100%{opacity:1;} 50%{opacity:0.3;} }
-  table{ width:100%; border-collapse:collapse; font-size:13px; }
-  th, td{ border:1px solid var(--line); padding:9px 10px; text-align:left; }
-  thead th{
+  .btn-primary{ background: var(--teal); color:white; width:100%; margin-top:14px; }
+  .btn-primary:hover{ background: var(--navy); }
+  .btn-ghost{ background: transparent; color: var(--navy); border:1.5px solid var(--line); }
+  .btn-ghost:hover{ background: var(--navy-wash); }
+  .btn-danger-ghost{ background:transparent; color: var(--danger); border: 1.5px solid #F1D2C9; }
+  .btn-sm{ padding: 7px 10px; font-size:12.5px; }
+
+  /* Table salarié */
+  .table-wrap{ overflow-x:auto; margin: 0 -2px; }
+  table.trip-table{ width:100%; border-collapse: collapse; font-size: 12.5px; min-width: 560px; }
+  .trip-table th, .trip-table td{
+    border: 1px solid var(--line); padding: 8px 9px; text-align:left; vertical-align: middle;
+  }
+  .trip-table thead th{
+    background: var(--navy-wash); color: var(--navy);
+    font-family: var(--font-display); font-weight:600; font-size: 11px;
+    text-transform: uppercase; letter-spacing: 0.03em;
+  }
+  .trip-table td.cell-date{ font-weight:600; white-space:nowrap; color: var(--ink); }
+  .trip-table td.cell-km{ font-family: var(--font-mono); color: var(--teal); font-weight:600; white-space:nowrap; }
+  .trip-table td.cell-total{ font-family: var(--font-mono); font-weight:700; color: var(--navy); white-space:nowrap; background: var(--teal-wash); }
+  .trip-table td.cell-forfait{ font-family: var(--font-mono); font-weight:700; color: var(--coral); white-space:nowrap; background: var(--coral-wash); }
+  .trip-table td.cell-del{ text-align:center; padding: 4px; }
+  .leg-del{
+    background:none; border:none; cursor:pointer; color: var(--ink-soft);
+    font-size:13px; padding:4px 7px; border-radius: 6px; line-height:1;
+  }
+  .leg-del:hover{ color: var(--danger); background: #FBEAE6; }
+  tr.total-row td{
+    background: var(--navy); color:white; font-family: var(--font-display); font-weight:600;
+    font-size: 12px; text-transform:uppercase; letter-spacing:0.03em;
+  }
+  tr.total-row td.cell-km, tr.total-row td.cell-forfait{ background: var(--navy); color:white; }
+  .direction-tag{
+    display:inline-block; margin-left:8px; font-size:10px; font-weight:600; text-transform:none;
+    letter-spacing:0; color: rgba(255,255,255,0.75); font-family: var(--font-body);
+  }
+
+  .empty-state{
+    text-align:center; padding: 26px 12px; color: var(--ink-soft); font-size:13.5px;
+  }
+  .empty-state .icon{ font-size: 26px; margin-bottom:8px; }
+
+  /* Sticky total bar (salarié) */
+  .total-bar{
+    position: sticky; bottom: 0; left:0; right:0;
+    background: var(--surface);
+    border-top: 1px solid var(--line);
+    padding: 12px 20px;
+    display:flex; align-items:center; justify-content:space-between; gap: 14px;
+    box-shadow: 0 -6px 18px -10px rgba(27,42,107,0.28);
+    z-index: 5;
+  }
+  .tb-group{ display:flex; flex-direction:column; align-items:flex-start; }
+  .tb-group.right{ align-items:flex-end; }
+  .total-bar .label{ font-size:11px; color: var(--ink-soft); font-weight:600; text-transform:uppercase; letter-spacing:0.04em; }
+  .total-bar .value{ font-family: var(--font-mono); font-size: 20px; font-weight:600; color: var(--navy); }
+  .total-bar .value.coral{ color: var(--coral); }
+
+  .toolbar{ display:flex; gap:10px; margin-top: 14px; }
+  .toolbar .btn{ flex:1; }
+
+  .toast{
+    position: fixed; top: 14px; left:50%; transform: translateX(-50%);
+    background: var(--ink); color:white; font-size:13px; padding: 9px 16px;
+    border-radius: 20px; opacity:0; pointer-events:none; transition: opacity 0.25s, transform 0.25s;
+    z-index: 50; white-space:nowrap;
+  }
+  .toast.show{ opacity:1; transform: translateX(-50%) translateY(4px); }
+
+  .loading-row{ text-align:center; padding: 20px; color: var(--ink-soft); font-size:13px; }
+
+  /* ===== Vue direction ===== */
+  #view-direction .status-row{ display:flex; align-items:center; justify-content:space-between; margin-bottom:12px; flex-wrap:wrap; gap:8px; }
+  #view-direction .live-dot{ display:inline-flex; align-items:center; gap:6px; font-size:11px; color: var(--ink-soft); }
+  #view-direction .live-dot .dot{ width:7px; height:7px; border-radius:50%; background:var(--teal); animation: dirpulse 1.6s infinite; }
+  @keyframes dirpulse{ 0%,100%{opacity:1;} 50%{opacity:0.3;} }
+  #view-direction table.dir-table{ width:100%; border-collapse:collapse; font-size:13px; }
+  #view-direction table.dir-table th, #view-direction table.dir-table td{ border:1px solid var(--line); padding:9px 10px; text-align:left; }
+  #view-direction table.dir-table thead th{
     background: var(--navy-wash); color: var(--navy); font-family: var(--font-display);
     font-weight:600; font-size:11px; text-transform:uppercase; letter-spacing:0.03em;
   }
-  td.num{ font-family: var(--font-mono); font-weight:600; white-space:nowrap; }
-  td.km{ color: var(--teal); }
-  td.forfait{ color: var(--coral); }
-  tr.total td{ background: var(--navy); color:white; font-weight:700; }
-  tr.salarie-row{ cursor:pointer; }
-  tr.salarie-row:hover td{ background: var(--teal-wash); }
-  tr.salarie-row td:first-child{ display:flex; align-items:center; gap:6px; }
-  tr.salarie-row .chevron{ display:inline-block; transition: transform 0.15s; font-size:11px; color: var(--ink-soft); }
-  tr.salarie-row.open .chevron{ transform: rotate(90deg); }
-  tr.detail-row td{ padding:0; border-top:none; }
-  .detail-wrap{ padding:10px 14px 14px; background:#FAFBFF; }
-  table.detail-table{ width:100%; border-collapse:collapse; font-size:12px; margin-top:6px; }
-  table.detail-table th, table.detail-table td{ border:1px solid var(--line); padding:6px 8px; text-align:left; }
-  table.detail-table thead th{ background: var(--navy-wash); color:var(--navy); font-size:10.5px; text-transform:uppercase; }
-  table.detail-table td.cell-total{ background: var(--teal-wash); font-family: var(--font-mono); font-weight:700; color:var(--navy); }
-  table.detail-table td.cell-forfait{ background: var(--coral-wash); font-family: var(--font-mono); font-weight:700; color:var(--coral); }
-  .detail-loading{ font-size:12px; color: var(--ink-soft); padding:8px 0; }
-  .empty{ text-align:center; padding:24px; color: var(--ink-soft); font-size:13.5px; }
-  .error-box{ background: var(--coral-wash); color:#8a3220; border-radius:10px; padding:10px 14px; font-size:13px; margin-bottom:12px; }
-  .login-card{ max-width:360px; margin:60px auto 0; }
+  #view-direction td.num{ font-family: var(--font-mono); font-weight:600; white-space:nowrap; }
+  #view-direction td.km{ color: var(--teal); }
+  #view-direction td.forfait{ color: var(--coral); }
+  #view-direction tr.total td{ background: var(--navy); color:white; font-weight:700; }
+  #view-direction tr.salarie-row{ cursor:pointer; }
+  #view-direction tr.salarie-row:hover td{ background: var(--teal-wash); }
+  #view-direction tr.salarie-row td:first-child{ display:flex; align-items:center; gap:6px; }
+  #view-direction tr.salarie-row .chevron{ display:inline-block; transition: transform 0.15s; font-size:11px; color: var(--ink-soft); }
+  #view-direction tr.salarie-row.open .chevron{ transform: rotate(90deg); }
+  #view-direction tr.detail-row td{ padding:0; border-top:none; }
+  #view-direction .detail-wrap{ padding:10px 14px 14px; background:#FAFBFF; }
+  #view-direction table.detail-table{ width:100%; border-collapse:collapse; font-size:12px; margin-top:6px; }
+  #view-direction table.detail-table th, #view-direction table.detail-table td{ border:1px solid var(--line); padding:6px 8px; text-align:left; }
+  #view-direction table.detail-table thead th{ background: var(--navy-wash); color:var(--navy); font-size:10.5px; text-transform:uppercase; }
+  #view-direction table.detail-table td.cell-total{ background: var(--teal-wash); font-family: var(--font-mono); font-weight:700; color:var(--navy); }
+  #view-direction table.detail-table td.cell-forfait{ background: var(--coral-wash); font-family: var(--font-mono); font-weight:700; color:var(--coral); }
+  #view-direction .detail-loading{ font-size:12px; color: var(--ink-soft); padding:8px 0; }
+  #view-direction .empty-dir{ text-align:center; padding:24px; color: var(--ink-soft); font-size:13.5px; }
+  #view-direction .error-box{ background: var(--coral-wash); color:#8a3220; border-radius:10px; padding:10px 14px; font-size:13px; margin-bottom:12px; }
+  #view-direction .btn-login{ background: var(--teal); color:white; width:100%; margin-top:12px; }
+  #view-direction .btn-login:hover{ background: var(--navy); }
+  #view-direction .table-wrap{ overflow-x:auto; }
+
+  @media print{
+    .hero, .view-tabs, .toolbar, .swap-btn, .leg-del, .no-print, .btn-primary, .checkbox-row, .total-bar{ display:none !important; }
+    .card{ box-shadow:none; margin: 0 0 12px; border:1px solid #ccc; }
+    body{ background:white; }
+    tr.total-row td{ background:#eee !important; color:#000 !important; }
+  }
 </style>
 </head>
 <body>
 <div class="app">
+
   <div class="hero">
-    <h1>Vue direction</h1>
+    <div class="brand">
+      <div class="brand-mark">A</div>
+      <div>
+        <div class="brand-name">AID'Aux</div>
+        <div class="brand-sub">Services d'aide à la personne</div>
+      </div>
+    </div>
+    <h1>Frais kilométriques — Direction</h1>
     <p>Suivi en direct des frais kilométriques déclarés par les salariés.</p>
   </div>
 
-  <div id="login-view" class="card login-card">
-    <div class="field-row">
-      <div class="field">
-        <label for="email">Adresse email</label>
-        <input type="email" id="email" placeholder="prenom.nom@aidaux.fr">
-      </div>
-    </div>
-    <div class="field-row" style="margin-top:10px;">
-      <div class="field">
-        <label for="password">Mot de passe</label>
-        <input type="password" id="password" placeholder="••••••••">
-      </div>
-    </div>
-    <div id="login-error" class="error-box" style="display:none; margin-top:10px;"></div>
-    <button class="btn" id="btn-login" style="width:100%; margin-top:12px;">Se connecter</button>
-    <div style="text-align:center; margin-top:12px; font-size:13px;">
-      <a href="/reset.html" style="color:var(--navy); text-decoration:none;">Mot de passe oublié / première connexion</a>
-    </div>
-  </div>
+  <!-- ======================= VUE DIRECTION ======================= -->
+  <div id="view-direction">
 
-  <div id="dashboard-view" class="card" style="display:none;">
-    <div class="status-row">
-      <div class="field" style="max-width:180px;">
-        <label for="mois">Mois</label>
-        <input type="month" id="mois">
+    <div class="card" id="share-card">
+      <div class="section-label"><span class="dot"></span>Lien à envoyer aux salariés</div>
+      <div class="field-row">
+        <div class="field">
+          <input type="text" id="share-link" readonly>
+        </div>
+        <button class="btn btn-ghost btn-sm" id="btn-copy-link" type="button" style="white-space:nowrap;">📋 Copier le lien</button>
       </div>
-      <div class="live-dot"><span class="dot"></span> Actualisation automatique</div>
     </div>
-    <div id="dash-error" class="error-box" style="display:none;"></div>
-    <div id="table-wrap"></div>
-    <div id="empty" class="empty" style="display:none;">Aucun trajet déclaré pour ce mois pour l'instant.</div>
-  </div>
+
+    <div class="card" id="dir-login-view">
+      <div class="section-label"><span class="dot"></span>Accès direction</div>
+      <div class="field-row" style="margin-top:12px;">
+        <div class="field">
+          <label for="dir-email">Adresse email</label>
+          <input type="email" id="dir-email" placeholder="prenom.nom@aidaux.fr">
+        </div>
+      </div>
+      <div class="field-row" style="margin-top:10px;">
+        <div class="field">
+          <label for="dir-password">Mot de passe</label>
+          <input type="password" id="dir-password" placeholder="••••••••">
+        </div>
+      </div>
+      <div id="dir-login-error" class="error-box" style="display:none; margin-top:10px;"></div>
+      <button class="btn btn-login" id="dir-btn-login" type="button">Se connecter</button>
+      <div style="text-align:center; margin-top:10px; font-size:13px;">
+        <a href="/reset.html">Mot de passe oublié / première connexion</a>
+      </div>
+    </div>
+
+    <div class="card" id="dir-dashboard-view" style="display:none;">
+      <div class="status-row">
+        <div class="field" style="max-width:180px;">
+          <label for="dir-mois">Mois</label>
+          <input type="month" id="dir-mois">
+        </div>
+        <div class="live-dot"><span class="dot"></span> Actualisation automatique</div>
+      </div>
+      <div id="dir-dash-error" class="error-box" style="display:none;"></div>
+      <div id="dir-table-wrap" class="table-wrap"></div>
+      <div id="dir-empty" class="empty-dir" style="display:none;">Aucun trajet déclaré pour ce mois pour l'instant.</div>
+      <div class="toolbar no-print">
+        <button class="btn btn-ghost btn-sm" id="dir-btn-print">🖨️ Imprimer</button>
+        <button class="btn btn-ghost btn-sm" id="dir-btn-csv">⬇️ Exporter CSV</button>
+      </div>
+    </div>
+
+  </div><!-- /view-direction -->
+
 </div>
 
+<div class="toast" id="toast"></div>
+
 <script>
+/* ======================= VUE DIRECTION ======================= */
 (function(){
   const $ = (id) => document.getElementById(id);
   const els = {
-    loginView: $('login-view'), dashboardView: $('dashboard-view'),
-    email: $('email'), password: $('password'), btnLogin: $('btn-login'), loginError: $('login-error'),
-    mois: $('mois'), dashError: $('dash-error'), tableWrap: $('table-wrap'), empty: $('empty'),
+    loginView: $('dir-login-view'), dashboardView: $('dir-dashboard-view'),
+    email: $('dir-email'), password: $('dir-password'), btnLogin: $('dir-btn-login'), loginError: $('dir-login-error'),
+    mois: $('dir-mois'), dashError: $('dir-dash-error'), tableWrap: $('dir-table-wrap'), empty: $('dir-empty'),
+    btnPrint: $('dir-btn-print'), btnCsv: $('dir-btn-csv'), toast: $('toast'),
   };
 
   let currentToken = '';
   let pollTimer = null;
   let expandedSalarie = null;
   let lastList = [];
+  let isActive = true;
   const SESSION_KEY = 'fraisKm:sessionToken';
 
   function todayMonth(){
     const d = new Date();
     return d.getFullYear() + '-' + String(d.getMonth()+1).padStart(2,'0');
   }
-
   function fmtKm(n){ return (Math.round(n*10)/10).toString().replace('.', ',') + ' km'; }
   function fmtEuro(n){ return (Math.round(n*100)/100).toString().replace('.', ',') + ' €'; }
   function escapeHtml(str){ const d = document.createElement('div'); d.textContent = str || ''; return d.innerHTML; }
@@ -157,6 +420,11 @@
     if(km <= 40.99) return 4;
     return 6;
   }
+  function showToast(msg){
+    els.toast.textContent = msg;
+    els.toast.classList.add('show');
+    setTimeout(()=> els.toast.classList.remove('show'), 1800);
+  }
 
   async function fetchSalaries(){
     const mois = els.mois.value || todayMonth();
@@ -164,11 +432,12 @@
       const res = await fetch('/api/salaries?mois=' + encodeURIComponent(mois) + '&token=' + encodeURIComponent(currentToken));
       if(res.status === 401){
         stopPolling();
+        currentToken = '';
         sessionStorage.removeItem(SESSION_KEY);
         els.dashboardView.style.display = 'none';
         els.loginView.style.display = 'block';
         els.loginError.style.display = 'block';
-        els.loginError.textContent = 'Session expirée, merci de te reconnecter.';
+        els.loginError.textContent = 'Session expirée, merci de vous reconnecter.';
         return;
       }
       const data = await res.json();
@@ -208,12 +477,12 @@
         <td class="num forfait">${fmtEuro(item.forfait)}</td>
       </tr>`;
       if(isOpen){
-        html += `<tr class="detail-row"><td colspan="4"><div class="detail-wrap" id="detail-wrap"><div class="detail-loading">Chargement du détail...</div></div></td></tr>`;
+        html += `<tr class="detail-row"><td colspan="4"><div class="detail-wrap" id="dir-detail-wrap"><div class="detail-loading">Chargement du détail...</div></div></td></tr>`;
       }
       return html;
     }).join('');
     els.tableWrap.innerHTML = `
-      <table>
+      <table class="dir-table">
         <thead><tr><th>Salarié</th><th>Jours</th><th>Km</th><th>Forfait</th></tr></thead>
         <tbody>${rows}</tbody>
         <tfoot><tr class="total"><td>Total</td><td></td><td class="num">${fmtKm(totalKm)}</td><td class="num">${fmtEuro(totalForfait)}</td></tr></tfoot>
@@ -231,7 +500,7 @@
 
   async function loadDetail(salarie){
     const mois = els.mois.value || todayMonth();
-    const wrap = document.getElementById('detail-wrap');
+    const wrap = document.getElementById('dir-detail-wrap');
     try{
       const res = await fetch('/api/trajets?salarie=' + encodeURIComponent(salarie) + '&mois=' + encodeURIComponent(mois));
       const entries = await res.json();
@@ -279,7 +548,7 @@
   function startPolling(){
     stopPolling();
     fetchSalaries();
-    pollTimer = setInterval(fetchSalaries, 10000);
+    pollTimer = setInterval(() => { if(isActive) fetchSalaries(); }, 10000);
   }
   function stopPolling(){
     if(pollTimer){ clearInterval(pollTimer); pollTimer = null; }
@@ -291,26 +560,32 @@
     if(!token){
       let data;
       try{
-        const res = await fetch('/api/auth/login', {
+        const resLogin = await fetch('/api/auth/login', {
           method: 'POST', headers: {'Content-Type':'application/json'},
           body: JSON.stringify({ email, password })
         });
-        data = await res.json().catch(()=>({}));
-        if(!res.ok){
+        data = await resLogin.json().catch(()=>({}));
+        if(!resLogin.ok){
           els.loginError.style.display = 'block';
           els.loginError.textContent = data.error || 'Erreur de connexion.';
           return;
         }
       }catch(e){
         els.loginError.style.display = 'block';
-        els.loginError.textContent = 'Erreur de connexion.';
+        els.loginError.textContent = 'Connexion impossible, réessayez.';
         return;
       }
       token = data.token;
     }
-    currentToken = token;
     const mois = els.mois.value || todayMonth();
-    const res = await fetch('/api/salaries?mois=' + encodeURIComponent(mois) + '&token=' + encodeURIComponent(token));
+    let res;
+    try{
+      res = await fetch('/api/salaries?mois=' + encodeURIComponent(mois) + '&token=' + encodeURIComponent(token));
+    }catch(e){
+      els.loginError.style.display = 'block';
+      els.loginError.textContent = 'Connexion impossible, réessayez.';
+      return;
+    }
     if(res.status === 401){
       sessionStorage.removeItem(SESSION_KEY);
       els.loginError.style.display = 'block';
@@ -323,12 +598,34 @@
       els.loginError.textContent = (data && data.error) || 'Erreur de connexion.';
       return;
     }
+    currentToken = token;
     sessionStorage.setItem(SESSION_KEY, token);
     els.loginView.style.display = 'none';
     els.dashboardView.style.display = 'block';
     lastList = data;
     render(data);
-    startPolling();
+    if(isActive) startPolling();
+  }
+
+  function exportCsv(){
+    if(!lastList || lastList.length === 0){ showToast('Aucune donnée à exporter'); return; }
+    const rows = [['Salarié','Jours','Total km','Forfait (€)']];
+    let totalKm = 0, totalForfait = 0;
+    lastList.forEach(item => {
+      totalKm += item.km; totalForfait += item.forfait;
+      rows.push([item.salarie, String(item.jours), String(item.km).replace('.', ','), String(item.forfait).replace('.', ',')]);
+    });
+    rows.push(['Total','', String(Math.round(totalKm*10)/10).replace('.', ','), String(Math.round(totalForfait*100)/100).replace('.', ',')]);
+    const csv = rows.map(r => r.map(c => '"' + String(c).replace(/"/g,'""') + '"').join(';')).join('\n');
+    const blob = new Blob(['\ufeff' + csv], { type: 'text/csv;charset=utf-8;' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `frais_kms_direction_${els.mois.value || 'mois'}.csv`;
+    document.body.appendChild(a);
+    a.click();
+    a.remove();
+    URL.revokeObjectURL(url);
   }
 
   els.btnLogin.addEventListener('click', () => {
@@ -340,13 +637,42 @@
   els.password.addEventListener('keydown', (e) => {
     if(e.key === 'Enter') els.btnLogin.click();
   });
-  els.mois.addEventListener('change', fetchSalaries);
+  els.mois.addEventListener('change', () => { if(currentToken) fetchSalaries(); });
+  if(els.btnPrint) els.btnPrint.addEventListener('click', () => window.print());
+  if(els.btnCsv) els.btnCsv.addEventListener('click', exportCsv);
 
-  (function init(){
-    if(!els.mois.value) els.mois.value = todayMonth();
-    const saved = sessionStorage.getItem(SESSION_KEY);
-    if(saved) tryLogin(null, null, saved);
-  })();
+  // Contrôle depuis les onglets
+  window.DirectionView = {
+    activate(){
+      isActive = true;
+      if(!els.mois.value) els.mois.value = todayMonth();
+      if(currentToken){
+        startPolling();
+      } else {
+        const saved = sessionStorage.getItem(SESSION_KEY);
+        if(saved) tryLogin(null, null, saved);
+      }
+    },
+    deactivate(){
+      isActive = false;
+      stopPolling();
+    }
+  };
+
+  // Lien à envoyer aux salariés (page salarié, sans accès direction)
+  const shareLink = $('share-link');
+  const origin = (window.location.origin && window.location.origin !== 'null')
+    ? window.location.origin
+    : (window.location.protocol + '//' + window.location.host);
+  shareLink.value = origin + '/';
+  $('btn-copy-link').addEventListener('click', () => {
+    shareLink.select();
+    navigator.clipboard.writeText(shareLink.value)
+      .then(() => showToast('Lien copié ✓'))
+      .catch(() => showToast('Impossible de copier, sélectionne et copie manuellement'));
+  });
+
+  window.DirectionView.activate();
 })();
 </script>
 </body>
