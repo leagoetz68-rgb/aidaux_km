@@ -54,7 +54,7 @@
       <label for="email">Votre adresse email professionnelle</label>
       <input type="email" id="email" autofocus required>
       <button id="btn">Recevoir le lien</button>
-      <div class="links"><a href="/">Retour à la connexion</a></div>
+      <div class="links"><a href="/admin.html">Retour à la connexion</a></div>
     `;
     const msg = document.getElementById('msg');
     document.getElementById('btn').addEventListener('click', async () => {
@@ -132,7 +132,7 @@
         card.innerHTML = `
           <h1>C'est fait !</h1>
           <div class="ok-box">Votre mot de passe a bien été enregistré.</div>
-          <div class="links"><a href="/">Se connecter</a></div>
+          <div class="links"><a href="/admin.html">Se connecter</a></div>
         `;
       }catch(e){
         msg.innerHTML = '<div class="error-box">Erreur de connexion.</div>';
