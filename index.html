@@ -3,8 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Direction — Frais Kilométriques AID'Aux</title>
-<meta name="robots" content="noindex">
+<title>Frais Kilométriques — AID'Aux</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;600;700&family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@500;600&display=swap" rel="stylesheet">
@@ -329,12 +328,159 @@
         <div class="brand-sub">Services d'aide à la personne</div>
       </div>
     </div>
-    <h1>Frais kilométriques — Direction</h1>
-    <p>Suivi en direct des frais kilométriques déclarés par les salariés.</p>
+    <h1>Frais kilométriques</h1>
+    <p>1er lieu d'intervention / dernier lieu d'intervention — domicile. Enregistrez vos trajets, le total et le forfait se calculent tout seuls.</p>
   </div>
 
+  <!-- Onglets Salarié / Direction -->
+  <div class="view-tabs no-print" role="tablist">
+    <button class="view-tab active" id="tab-salarie" type="button" role="tab">🚗 Salarié</button>
+    <button class="view-tab" id="tab-direction" type="button" role="tab">📊 Direction</button>
+  </div>
+
+  <!-- ======================= VUE SALARIÉ ======================= -->
+  <div id="view-salarie">
+
+    <div class="card">
+      <div class="section-label"><span class="dot"></span>Informations</div>
+      <div class="field-row">
+        <div class="field">
+          <label for="salarie">Nom du salarié</label>
+          <input type="text" id="salarie" placeholder="ex. Erdogan">
+        </div>
+        <div class="field">
+          <label for="mois">Mois concerné</label>
+          <input type="month" id="mois">
+        </div>
+      </div>
+      <div class="field-row" style="margin-top:10px;">
+        <div class="field">
+          <label for="domicile">Adresse du domicile (départ habituel)</label>
+          <input type="text" id="domicile" placeholder="ex. 1 rue du canal 67550 Vendenheim">
+        </div>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="section-label"><span class="dot"></span>Ajouter un trajet</div>
+      <div class="field-row">
+        <div class="field" style="max-width:170px;">
+          <label for="f-date">Date</label>
+          <input type="date" id="f-date">
+        </div>
+      </div>
+
+      <div class="leg-block">
+        <div class="leg-block-title">Aller</div>
+        <div class="field-row" style="align-items:flex-end;">
+          <div class="field">
+            <label for="f-depart">Adresse de départ</label>
+            <input type="text" id="f-depart" placeholder="Adresse de départ">
+          </div>
+          <button class="swap-btn" id="btn-swap" type="button" title="Inverser départ / arrivée">⇅</button>
+          <div class="field">
+            <label for="f-arrivee">Adresse d'arrivée</label>
+            <input type="text" id="f-arrivee" placeholder="Adresse d'arrivée">
+          </div>
+        </div>
+        <div class="field-row" style="margin-top:10px; align-items:flex-end;">
+          <div class="field" style="max-width:150px;">
+            <label for="f-km">Nombre de km (aller)</label>
+            <input type="number" id="f-km" step="0.1" min="0" placeholder="ex. 4,2">
+            <span class="calc-status" id="aller-calc-status"></span>
+          </div>
+          <button class="tab-btn" id="btn-calc-aller" type="button">📍 Calculer</button>
+        </div>
+      </div>
+
+      <label class="checkbox-row">
+        <input type="checkbox" id="f-has-retour" checked>
+        Ajouter aussi un trajet retour
+      </label>
+
+      <div class="leg-block" id="retour-block">
+        <div class="leg-block-title">
+          Retour
+          <button class="tab-btn" id="btn-copy-retour" type="button" style="margin-left:8px;">↺ Reprendre l'aller inversé</button>
+        </div>
+        <div class="field-row" style="align-items:flex-end;">
+          <div class="field">
+            <label for="f-retour-depart">Adresse de départ (retour)</label>
+            <input type="text" id="f-retour-depart" placeholder="Adresse de départ">
+          </div>
+          <div class="field">
+            <label for="f-retour-arrivee">Adresse d'arrivée (retour)</label>
+            <input type="text" id="f-retour-arrivee" placeholder="Adresse d'arrivée">
+          </div>
+        </div>
+        <div class="field-row" style="margin-top:10px; align-items:flex-end;">
+          <div class="field" style="max-width:150px;">
+            <label for="f-retour-km">Nombre de km (retour)</label>
+            <input type="number" id="f-retour-km" step="0.1" min="0" placeholder="ex. 4,2">
+            <span class="calc-status" id="retour-calc-status"></span>
+          </div>
+          <button class="tab-btn" id="btn-calc-retour" type="button">📍 Calculer</button>
+        </div>
+      </div>
+
+      <button class="btn btn-primary" id="btn-add">+ Ajouter le trajet</button>
+    </div>
+
+    <div class="card">
+      <div class="section-header-row">
+        <div class="section-label"><span class="dot"></span>Trajets du mois</div>
+        <button class="tab-btn no-print" id="btn-bareme" type="button">ℹ️ Barème de remboursement</button>
+      </div>
+
+      <div id="bareme-panel" class="bareme-panel no-print" style="display:none;">
+        <div class="bareme-row"><span>Moins de 20,99 km / jour</span><strong>2 €</strong></div>
+        <div class="bareme-row"><span>Entre 21 et 40,99 km / jour</span><strong>4 €</strong></div>
+        <div class="bareme-row"><span>Au-delà de 41 km / jour</span><strong>6 €</strong></div>
+        <p class="bareme-note">Le forfait est calculé automatiquement par journée, sur la base du total de km parcourus ce jour-là.</p>
+      </div>
+
+      <div id="loading" class="loading-row">Chargement de vos trajets…</div>
+
+      <div id="table-wrap" class="table-wrap" style="display:none;">
+        <table class="trip-table">
+          <thead>
+            <tr>
+              <th>Date</th>
+              <th>Adresse de départ</th>
+              <th>Adresse arrivée</th>
+              <th>Km</th>
+              <th>Total jour</th>
+              <th>Forfait jour</th>
+              <th class="no-print"></th>
+            </tr>
+          </thead>
+          <tbody id="trip-table-body"></tbody>
+          <tfoot>
+            <tr class="total-row">
+              <td colspan="3">Total du mois<span class="direction-tag">réservé à la direction</span></td>
+              <td class="cell-km"><span id="month-km-total">0 km</span></td>
+              <td class="cell-forfait" colspan="2"><span id="month-forfait-total">0 €</span></td>
+            </tr>
+          </tfoot>
+        </table>
+      </div>
+
+      <div id="empty" class="empty-state" style="display:none;">
+        <div class="icon">🚗</div>
+        Aucun trajet enregistré pour ce mois pour l'instant.
+      </div>
+
+      <div class="toolbar no-print">
+        <button class="btn btn-ghost btn-sm" id="btn-print">🖨️ Imprimer</button>
+        <button class="btn btn-ghost btn-sm" id="btn-csv">⬇️ Exporter CSV</button>
+        <button class="btn btn-danger-ghost btn-sm" id="btn-reset">Effacer le mois</button>
+      </div>
+    </div>
+
+  </div><!-- /view-salarie -->
+
   <!-- ======================= VUE DIRECTION ======================= -->
-  <div id="view-direction">
+  <div id="view-direction" style="display:none;">
 
     <div class="card" id="share-card">
       <div class="section-label"><span class="dot"></span>Lien à envoyer aux salariés</div>
@@ -388,9 +534,473 @@
 
 </div>
 
+<div class="total-bar no-print" id="total-bar">
+  <div class="tb-group">
+    <span class="label">Total km</span>
+    <span class="value" id="month-total">0 km</span>
+  </div>
+  <div class="tb-group right">
+    <span class="label">Total forfait</span>
+    <span class="value coral" id="month-total-forfait">0 €</span>
+  </div>
+</div>
+
 <div class="toast" id="toast"></div>
 
 <script>
+/* ======================= VUE SALARIÉ ======================= */
+(function(){
+  const $ = (id) => document.getElementById(id);
+  const els = {
+    salarie: $('salarie'), mois: $('mois'), domicile: $('domicile'),
+    fDate: $('f-date'), fKm: $('f-km'), fDepart: $('f-depart'), fArrivee: $('f-arrivee'),
+    fHasRetour: $('f-has-retour'), retourBlock: $('retour-block'),
+    fRetourDepart: $('f-retour-depart'), fRetourArrivee: $('f-retour-arrivee'), fRetourKm: $('f-retour-km'),
+    allerCalcStatus: $('aller-calc-status'), retourCalcStatus: $('retour-calc-status'),
+    btnCalcAller: $('btn-calc-aller'), btnCalcRetour: $('btn-calc-retour'),
+    btnCopyRetour: $('btn-copy-retour'),
+    btnAdd: $('btn-add'), btnSwap: $('btn-swap'),
+    btnBareme: $('btn-bareme'), baremePanel: $('bareme-panel'),
+    tableWrap: $('table-wrap'), tripTableBody: $('trip-table-body'),
+    loading: $('loading'), empty: $('empty'),
+    monthTotal: $('month-total'), monthTotalForfait: $('month-total-forfait'),
+    monthKmTotal: $('month-km-total'), monthForfaitTotal: $('month-forfait-total'),
+    toast: $('toast'),
+    btnPrint: $('btn-print'), btnCsv: $('btn-csv'), btnReset: $('btn-reset'),
+    shareLink: $('share-link'), btnCopyLink: $('btn-copy-link')
+  };
+
+  let entries = [];
+  const LAST_SALARIE_KEY = 'fraisKm:lastSalarie';
+
+  function todayMonth(){
+    const d = new Date();
+    return d.getFullYear() + '-' + String(d.getMonth()+1).padStart(2,'0');
+  }
+  function todayISO(){
+    return new Date().toISOString().slice(0,10);
+  }
+  function showToast(msg){
+    els.toast.textContent = msg;
+    els.toast.classList.add('show');
+    setTimeout(()=> els.toast.classList.remove('show'), 1800);
+  }
+  function fmtKm(n){
+    return (Math.round(n*10)/10).toString().replace('.', ',') + ' km';
+  }
+  function fmtEuro(n){
+    return (Math.round(n*100)/100).toString().replace('.', ',') + ' €';
+  }
+  function escapeHtml(str){
+    const d = document.createElement('div');
+    d.textContent = str || '';
+    return d.innerHTML;
+  }
+  function currentSalarie(){
+    return (els.salarie.value || '').trim();
+  }
+  function currentMois(){
+    return els.mois.value || todayMonth();
+  }
+  function calcForfait(km){
+    if(km <= 20.99) return 2;
+    if(km <= 40.99) return 4;
+    return 6;
+  }
+
+  async function loadDomicile(){
+    const salarie = currentSalarie();
+    if(!salarie) return;
+    try{
+      const res = await fetch('/api/settings?salarie=' + encodeURIComponent(salarie));
+      const data = await res.json();
+      // setAddr remet aussi à zéro les coordonnées du salarié précédent
+      setAddr(els.domicile, (data && data.domicile) || '');
+    }catch(e){ /* pas de réglages pour ce salarié */ }
+  }
+
+  async function saveDomicile(){
+    const salarie = currentSalarie();
+    if(!salarie) return;
+    try{
+      await fetch('/api/settings', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ salarie, domicile: els.domicile.value.trim() })
+      });
+    }catch(e){ console.error('Erreur sauvegarde réglages', e); }
+  }
+
+  async function loadEntries(){
+    const salarie = currentSalarie();
+    if(!salarie){
+      entries = [];
+      els.loading.style.display = 'none';
+      render();
+      return;
+    }
+    els.loading.style.display = 'block';
+    els.tableWrap.style.display = 'none';
+    els.empty.style.display = 'none';
+    try{
+      const res = await fetch('/api/trajets?salarie=' + encodeURIComponent(salarie) + '&mois=' + encodeURIComponent(currentMois()));
+      if(!res.ok) throw new Error('Erreur serveur');
+      entries = await res.json();
+    }catch(e){
+      entries = [];
+      showToast('Impossible de charger les trajets');
+    }
+    els.loading.style.display = 'none';
+    render();
+  }
+
+  function render(){
+    const byDate = {};
+    entries.forEach(e => {
+      if(!byDate[e.date]) byDate[e.date] = [];
+      byDate[e.date].push(e);
+    });
+    const dates = Object.keys(byDate).sort();
+
+    let monthKm = 0;
+    let monthForfait = 0;
+
+    if(dates.length === 0){
+      els.tripTableBody.innerHTML = '';
+      els.tableWrap.style.display = 'none';
+      els.empty.style.display = 'block';
+    } else {
+      els.empty.style.display = 'none';
+      els.tableWrap.style.display = 'block';
+      let rowsHtml = '';
+      dates.forEach(date => {
+        const legs = byDate[date];
+        const dayKm = legs.reduce((s,l)=> s + Number(l.km||0), 0);
+        const dayForfait = calcForfait(dayKm);
+        monthKm += dayKm;
+        monthForfait += dayForfait;
+        const dateLabel = new Date(date + 'T00:00:00').toLocaleDateString('fr-FR', { day:'2-digit', month:'2-digit', year:'numeric' });
+        legs.forEach((leg, i) => {
+          rowsHtml += '<tr>';
+          if(i === 0){
+            rowsHtml += `<td class="cell-date" rowspan="${legs.length}">${dateLabel}</td>`;
+          }
+          rowsHtml += `
+            <td>${escapeHtml(leg.depart)}</td>
+            <td>${escapeHtml(leg.arrivee)}</td>
+            <td class="cell-km">${fmtKm(Number(leg.km||0))}</td>
+          `;
+          if(i === 0){
+            rowsHtml += `<td class="cell-total" rowspan="${legs.length}">${fmtKm(dayKm)}</td>`;
+            rowsHtml += `<td class="cell-forfait" rowspan="${legs.length}">${dayForfait} €</td>`;
+          }
+          rowsHtml += `<td class="cell-del no-print"><button class="leg-del" data-id="${leg.id}" title="Supprimer">✕</button></td>`;
+          rowsHtml += '</tr>';
+        });
+      });
+      els.tripTableBody.innerHTML = rowsHtml;
+    }
+
+    els.monthKmTotal.textContent = fmtKm(monthKm);
+    els.monthForfaitTotal.textContent = fmtEuro(monthForfait);
+    els.monthTotal.textContent = fmtKm(monthKm);
+    els.monthTotalForfait.textContent = fmtEuro(monthForfait);
+
+    els.tripTableBody.querySelectorAll('.leg-del').forEach(btn => {
+      btn.addEventListener('click', async () => {
+        const id = btn.dataset.id;
+        entries = entries.filter(e => e.id !== id);
+        render();
+        try{
+          await fetch('/api/trajets/' + encodeURIComponent(id), { method: 'DELETE' });
+        }catch(e){
+          showToast('Erreur lors de la suppression');
+        }
+      });
+    });
+  }
+
+  async function postLeg(salarie, mois, date, depart, arrivee, km){
+    const res = await fetch('/api/trajets', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ salarie, mois, date, depart, arrivee, km, retour: false })
+    });
+    if(!res.ok) throw new Error('Erreur serveur');
+  }
+
+  async function addTrip(){
+    const salarie = currentSalarie();
+    const date = els.fDate.value;
+    const depart = els.fDepart.value.trim();
+    const arrivee = els.fArrivee.value.trim();
+    const km = parseFloat((els.fKm.value || '').replace(',', '.'));
+    const hasRetour = els.fHasRetour.checked;
+    const rDepart = els.fRetourDepart.value.trim();
+    const rArrivee = els.fRetourArrivee.value.trim();
+    const rKm = parseFloat((els.fRetourKm.value || '').replace(',', '.'));
+
+    if(!salarie){ showToast('Merci de renseigner le nom du salarié'); return; }
+    if(!date){ showToast('Merci de renseigner une date'); return; }
+    if(!depart || !arrivee){ showToast('Merci de renseigner les deux adresses de l\'aller'); return; }
+    if(isNaN(km) || km <= 0){ showToast('Merci de renseigner un nombre de km valide pour l\'aller'); return; }
+    if(hasRetour){
+      if(!rDepart || !rArrivee){ showToast('Merci de renseigner les deux adresses du retour'); return; }
+      if(isNaN(rKm) || rKm <= 0){ showToast('Merci de renseigner un nombre de km valide pour le retour'); return; }
+    }
+
+    els.btnAdd.disabled = true;
+    try{
+      const mois = currentMois();
+      await postLeg(salarie, mois, date, depart, arrivee, km);
+      if(hasRetour){
+        await postLeg(salarie, mois, date, rDepart, rArrivee, rKm);
+      }
+      await loadEntries();
+      showToast('Trajet ajouté ✓');
+      els.fKm.value = '';
+      setAddr(els.fArrivee, '');
+      els.fRetourKm.value = '';
+      setAddr(els.fRetourArrivee, '');
+      setAddr(els.fRetourDepart, '');
+      els.allerCalcStatus.textContent = ''; els.retourCalcStatus.textContent = '';
+      els.fKm.focus();
+    }catch(e){
+      showToast("Échec de l'enregistrement, réessayez");
+    }
+    els.btnAdd.disabled = false;
+  }
+
+  function toggleRetourBlock(){
+    els.retourBlock.style.display = els.fHasRetour.checked ? 'block' : 'none';
+  }
+
+  // --- Adresses : autocomplétion BAN + coordonnées mémorisées sur le champ ---
+  // Quand le salarié choisit une suggestion, on garde les coordonnées exactes
+  // (data-lon / data-lat) : le calcul ne dépend plus d'une interprétation du texte.
+  function clearCoords(input){
+    delete input.dataset.lon; delete input.dataset.lat;
+    input.classList.remove('addr-ok');
+  }
+  function setAddr(input, label, lon, lat){
+    input.value = label || '';
+    if(lon != null && lat != null){
+      input.dataset.lon = lon; input.dataset.lat = lat;
+      input.classList.add('addr-ok');
+    } else {
+      clearCoords(input);
+    }
+  }
+  function copyAddr(from, to){
+    setAddr(to, from.value, from.dataset.lon, from.dataset.lat);
+  }
+
+  function attachAutocomplete(input){
+    const list = document.createElement('div');
+    list.className = 'ac-list';
+    input.parentNode.appendChild(list);
+    input.setAttribute('autocomplete', 'off');
+    let items = [], active = -1, timer = null, reqId = 0;
+
+    function close(){ list.classList.remove('open'); list.innerHTML = ''; items = []; active = -1; }
+    function highlight(i){
+      active = i;
+      [...list.children].forEach((el, j) => el.classList.toggle('active', j === i));
+    }
+    function choose(i){
+      const it = items[i]; if(!it) return;
+      setAddr(input, it.label, it.lon, it.lat);
+      close();
+      input.dispatchEvent(new Event('change'));
+    }
+    async function search(){
+      const q = input.value.trim();
+      if(q.length < 3){ close(); return; }
+      const my = ++reqId;
+      try{
+        const res = await fetch('/api/adresse?q=' + encodeURIComponent(q));
+        const data = await res.json();
+        if(my !== reqId || document.activeElement !== input) return;
+        items = Array.isArray(data) ? data : [];
+        if(items.length === 0){ close(); return; }
+        list.innerHTML = items.map((it, i) =>
+          `<div class="ac-item" data-i="${i}">${escapeHtml(it.label)}${it.type === 'street' ? '<small>rue entière (numéro non référencé)</small>' : ''}</div>`
+        ).join('');
+        list.classList.add('open');
+        active = -1;
+      }catch(e){ close(); }
+    }
+    // mousedown + preventDefault : le champ garde le focus, donc pas de
+    // "change" prématuré avec un texte à moitié tapé.
+    list.addEventListener('mousedown', (e) => {
+      const el = e.target.closest('.ac-item'); if(!el) return;
+      e.preventDefault();
+      choose(Number(el.dataset.i));
+    });
+    input.addEventListener('input', () => {
+      clearCoords(input);
+      clearTimeout(timer);
+      timer = setTimeout(search, 250);
+    });
+    input.addEventListener('keydown', (e) => {
+      if(!list.classList.contains('open')) return;
+      if(e.key === 'ArrowDown'){ e.preventDefault(); highlight(Math.min(active + 1, items.length - 1)); }
+      else if(e.key === 'ArrowUp'){ e.preventDefault(); highlight(Math.max(active - 1, 0)); }
+      else if(e.key === 'Enter'){ if(active >= 0){ e.preventDefault(); choose(active); } }
+      else if(e.key === 'Escape'){ close(); }
+    });
+    input.addEventListener('blur', () => setTimeout(close, 150));
+  }
+
+  // --- Calcul automatique de la distance (BAN + itinéraire IGN) ---
+  const calcSeq = new WeakMap();
+  async function autoCalcKm(departEl, arriveeEl, kmEl, statusEl){
+    const depart = departEl.value.trim(), arrivee = arriveeEl.value.trim();
+    if(!depart || !arrivee) return;
+    const my = (calcSeq.get(kmEl) || 0) + 1;
+    calcSeq.set(kmEl, my);
+    const setStatus = (html, cls) => { if(statusEl){ statusEl.innerHTML = html; statusEl.className = 'calc-status ' + (cls || ''); } };
+    setStatus('Calcul de la distance...');
+    const params = new URLSearchParams({ depart, arrivee });
+    if(departEl.dataset.lon){ params.set('dlon', departEl.dataset.lon); params.set('dlat', departEl.dataset.lat); }
+    if(arriveeEl.dataset.lon){ params.set('alon', arriveeEl.dataset.lon); params.set('alat', arriveeEl.dataset.lat); }
+    try{
+      const res = await fetch('/api/distance?' + params.toString());
+      const data = await res.json();
+      if(calcSeq.get(kmEl) !== my) return; // une saisie plus récente a pris le relais
+      if(res.ok && typeof data.km === 'number'){
+        kmEl.value = String(data.km);
+        const warn = (data.warnings || []).length ? `<span class="route">⚠ ${escapeHtml(data.warnings.join(' ; '))}</span>` : '';
+        setStatus(
+          `Distance calculée : ${String(data.km).replace('.', ',')} km` +
+          `<span class="route">${escapeHtml(data.depart)} → ${escapeHtml(data.arrivee)}</span>` + warn,
+          'ok'
+        );
+      } else {
+        kmEl.value = '';
+        setStatus(escapeHtml(data.error || 'Distance non trouvée') + ' — sinon, renseignez le km manuellement', 'err');
+      }
+    }catch(e){
+      if(calcSeq.get(kmEl) !== my) return;
+      setStatus('Calcul indisponible, merci de renseigner le km manuellement', 'err');
+    }
+  }
+
+  function maybeAutoCalc(departEl, arriveeEl, kmEl, statusEl){
+    autoCalcKm(departEl, arriveeEl, kmEl, statusEl);
+  }
+
+  function copyRetourFromAller(){
+    copyAddr(els.fArrivee, els.fRetourDepart);
+    copyAddr(els.fDepart, els.fRetourArrivee);
+    els.fRetourKm.value = els.fKm.value;
+    maybeAutoCalc(els.fRetourDepart, els.fRetourArrivee, els.fRetourKm, els.retourCalcStatus);
+  }
+
+  function swapAddresses(){
+    const tmp = { value: els.fDepart.value, dataset: { ...els.fDepart.dataset } };
+    copyAddr(els.fArrivee, els.fDepart);
+    copyAddr(tmp, els.fArrivee);
+    maybeAutoCalc(els.fDepart, els.fArrivee, els.fKm, els.allerCalcStatus);
+  }
+
+  [els.domicile, els.fDepart, els.fArrivee, els.fRetourDepart, els.fRetourArrivee].forEach(attachAutocomplete);
+
+  function exportCsv(){
+    if(entries.length === 0){ showToast('Aucun trajet à exporter'); return; }
+    const byDate = {};
+    entries.forEach(e => { if(!byDate[e.date]) byDate[e.date] = []; byDate[e.date].push(e); });
+    const rows = [['Date','Adresse de départ','Adresse arrivée','Nombre Km','Total jour (km)','Forfait jour (€)']];
+    Object.keys(byDate).sort().forEach(date => {
+      const legs = byDate[date];
+      const dayKm = legs.reduce((s,l)=> s + Number(l.km||0), 0);
+      const dayForfait = calcForfait(dayKm);
+      legs.forEach((e, i) => {
+        rows.push([
+          e.date, e.depart, e.arrivee, String(e.km).replace('.', ','),
+          i === 0 ? String(Math.round(dayKm*10)/10).replace('.', ',') : '',
+          i === 0 ? String(dayForfait) : ''
+        ]);
+      });
+    });
+    const csv = rows.map(r => r.map(c => '"' + String(c).replace(/"/g,'""') + '"').join(';')).join('\n');
+    const blob = new Blob(['\ufeff' + csv], { type: 'text/csv;charset=utf-8;' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    const name = (els.salarie.value || 'salarie').trim().replace(/\s+/g,'_') || 'salarie';
+    a.href = url;
+    a.download = `frais_kms_${name}_${els.mois.value || 'mois'}.csv`;
+    document.body.appendChild(a);
+    a.click();
+    a.remove();
+    URL.revokeObjectURL(url);
+  }
+
+  async function resetMonth(){
+    const salarie = currentSalarie();
+    if(!salarie) return;
+    if(!confirm('Effacer tous les trajets enregistrés pour ce mois ? Cette action est irréversible.')) return;
+    try{
+      await fetch('/api/trajets?salarie=' + encodeURIComponent(salarie) + '&mois=' + encodeURIComponent(currentMois()), { method: 'DELETE' });
+      entries = [];
+      render();
+      showToast('Mois réinitialisé');
+    }catch(e){
+      showToast('Erreur lors de la réinitialisation');
+    }
+  }
+
+  els.btnAdd.addEventListener('click', addTrip);
+  els.btnSwap.addEventListener('click', swapAddresses);
+  els.fHasRetour.addEventListener('change', toggleRetourBlock);
+  els.btnCopyRetour.addEventListener('click', copyRetourFromAller);
+  els.fDepart.addEventListener('change', () => maybeAutoCalc(els.fDepart, els.fArrivee, els.fKm, els.allerCalcStatus));
+  els.fArrivee.addEventListener('change', () => maybeAutoCalc(els.fDepart, els.fArrivee, els.fKm, els.allerCalcStatus));
+  els.fRetourDepart.addEventListener('change', () => maybeAutoCalc(els.fRetourDepart, els.fRetourArrivee, els.fRetourKm, els.retourCalcStatus));
+  els.fRetourArrivee.addEventListener('change', () => maybeAutoCalc(els.fRetourDepart, els.fRetourArrivee, els.fRetourKm, els.retourCalcStatus));
+  els.btnCalcAller.addEventListener('click', () => maybeAutoCalc(els.fDepart, els.fArrivee, els.fKm, els.allerCalcStatus));
+  els.btnCalcRetour.addEventListener('click', () => maybeAutoCalc(els.fRetourDepart, els.fRetourArrivee, els.fRetourKm, els.retourCalcStatus));
+  els.btnPrint.addEventListener('click', () => window.print());
+  els.btnCopyLink.addEventListener('click', () => {
+    els.shareLink.select();
+    navigator.clipboard.writeText(els.shareLink.value)
+      .then(() => showToast('Lien copié ✓'))
+      .catch(() => showToast('Impossible de copier, sélectionne et copie manuellement'));
+  });
+  els.btnCsv.addEventListener('click', exportCsv);
+  els.btnReset.addEventListener('click', resetMonth);
+  els.btnBareme.addEventListener('click', () => {
+    const showing = els.baremePanel.style.display !== 'none';
+    els.baremePanel.style.display = showing ? 'none' : 'block';
+  });
+  els.salarie.addEventListener('change', async () => {
+    localStorage.setItem(LAST_SALARIE_KEY, currentSalarie());
+    await loadDomicile();
+    if(!els.fDepart.value) copyAddr(els.domicile, els.fDepart);
+    await loadEntries();
+  });
+  els.domicile.addEventListener('change', async () => {
+    await saveDomicile();
+    if(!els.fDepart.value) copyAddr(els.domicile, els.fDepart);
+  });
+  els.mois.addEventListener('change', loadEntries);
+
+  (async function init(){
+    const origin = (window.location.origin && window.location.origin !== 'null')
+      ? window.location.origin
+      : (window.location.protocol + '//' + window.location.host);
+    els.shareLink.value = origin + '/?salarie';
+    toggleRetourBlock();
+    if(!els.mois.value) els.mois.value = todayMonth();
+    if(!els.fDate.value) els.fDate.value = todayISO();
+    const lastSalarie = localStorage.getItem(LAST_SALARIE_KEY);
+    if(lastSalarie) els.salarie.value = lastSalarie;
+    await loadDomicile();
+    if(!els.fDepart.value) copyAddr(els.domicile, els.fDepart);
+    await loadEntries();
+  })();
+})();
+
 /* ======================= VUE DIRECTION ======================= */
 (function(){
   const $ = (id) => document.getElementById(id);
@@ -405,7 +1015,7 @@
   let pollTimer = null;
   let expandedSalarie = null;
   let lastList = [];
-  let isActive = true;
+  let isActive = false;
   const SESSION_KEY = 'fraisKm:sessionToken';
 
   function todayMonth(){
@@ -567,7 +1177,7 @@
         data = await resLogin.json().catch(()=>({}));
         if(!resLogin.ok){
           els.loginError.style.display = 'block';
-          els.loginError.textContent = data.error || 'Erreur de connexion.';
+          els.loginError.textContent = data.error || ('Erreur de connexion (étape login, code ' + resLogin.status + ').');
           return;
         }
       }catch(e){
@@ -595,7 +1205,7 @@
     const data = await res.json().catch(()=>null);
     if(!res.ok){
       els.loginError.style.display = 'block';
-      els.loginError.textContent = (data && data.error) || 'Erreur de connexion.';
+      els.loginError.textContent = (data && data.error) || ('Erreur de connexion (étape tableau, code ' + res.status + ').');
       return;
     }
     currentToken = token;
@@ -658,21 +1268,37 @@
       stopPolling();
     }
   };
+})();
 
-  // Lien à envoyer aux salariés (page salarié, sans accès direction)
-  const shareLink = $('share-link');
-  const origin = (window.location.origin && window.location.origin !== 'null')
-    ? window.location.origin
-    : (window.location.protocol + '//' + window.location.host);
-  shareLink.value = origin + '/salarie.html';
-  $('btn-copy-link').addEventListener('click', () => {
-    shareLink.select();
-    navigator.clipboard.writeText(shareLink.value)
-      .then(() => showToast('Lien copié ✓'))
-      .catch(() => showToast('Impossible de copier, sélectionne et copie manuellement'));
-  });
+/* ======================= ONGLETS ======================= */
+(function(){
+  const tabS = document.getElementById('tab-salarie');
+  const tabD = document.getElementById('tab-direction');
+  const viewS = document.getElementById('view-salarie');
+  const viewD = document.getElementById('view-direction');
+  const totalBar = document.getElementById('total-bar');
 
-  window.DirectionView.activate();
+  function showSalarie(){
+    tabS.classList.add('active'); tabD.classList.remove('active');
+    viewS.style.display = ''; viewD.style.display = 'none';
+    if(totalBar) totalBar.style.display = '';
+    if(window.DirectionView) window.DirectionView.deactivate();
+  }
+  function showDirection(){
+    tabD.classList.add('active'); tabS.classList.remove('active');
+    viewD.style.display = ''; viewS.style.display = 'none';
+    if(totalBar) totalBar.style.display = 'none';
+    if(window.DirectionView) window.DirectionView.activate();
+  }
+  tabS.addEventListener('click', showSalarie);
+  tabD.addEventListener('click', showDirection);
+
+  // Lien envoyé aux salariés (?salarie) : pas d'onglet ni de vue direction
+  if(new URLSearchParams(window.location.search).has('salarie')){
+    const tabsBar = document.querySelector('.view-tabs');
+    if(tabsBar) tabsBar.remove();
+    viewD.remove();
+  }
 })();
 </script>
 </body>
