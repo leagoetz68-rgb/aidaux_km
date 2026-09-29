@@ -144,7 +144,6 @@ let echantillon = null;
 
 async function choisirFormat(debut, fin) {
   if (formatRetenu) return formatRetenu;
-  essais = [];
   for (const f of FORMATS) {
     for (const pg of PAGES) {
       try {
@@ -162,8 +161,45 @@ async function choisirFormat(debut, fin) {
   return null;
 }
 
-async function interventionsDuMois(mois) {
+// Stratégie principale : recherche texte (request.search) sur le nom de l'intervenant,
+// toutes dates confondues, puis tri local par intervenant et par mois.
+let strategie = '';
+async function interventionsParRecherche(agent, debutMois, finMois) {
+  const termes = [...new Set([
+    String(agent.LastName || '').trim(),
+    `${agent.FirstName || ''} ${agent.LastName || ''}`.trim(),
+    `${agent.LastName || ''} ${agent.FirstName || ''}`.trim(),
+  ].filter(Boolean))];
+  for (const terme of termes) {
+    const res = [];
+    let offset = 0;
+    for (let i = 0; i < 20; i++) {
+      const data = await ximi.get('api/interventions/all', {
+        'request.search': terme, 'request.offset': offset, 'request.top': 500, 'request.computeHasMoreRows': 'true',
+      });
+      const page = listeDe(data);
+      res.push(...page);
+      if (Array.isArray(data) || !data.HasMoreRows || !page.length) break;
+      offset += page.length;
+    }
+    const siennes = res.filter(it => String(((it.Agent || {}).Id) || it.AgentId || '') === String(agent.Id));
+    const duMois = siennes.filter(it => { const d = debutDe(it).slice(0, 10); return d >= debutMois && d < finMois; });
+    essais.push({ format: `recherche « ${terme} »`, resultats: res.length, de_l_intervenant: siennes.length, dans_la_periode: duMois.length });
+    if (duMois.length) { strategie = `recherche « ${terme} »`; return duMois; }
+    if (!echantillon && res.length) echantillon = res[0];
+  }
+  return [];
+}
+
+async function interventionsDuMois(mois, agent) {
   const [y, m] = mois.split('-').map(Number);
+  const debutM = `${mois}-01`;
+  const finM = new Date(Date.UTC(y, m, 1)).toISOString().slice(0, 10);
+  essais = [];
+  if (agent) {
+    const parRecherche = await interventionsParRecherche(agent, debutM, finM);
+    if (parRecherche.length) return parRecherche;
+  }
   const nbJours = new Date(y, m, 0).getDate();
   const debutMois = `${mois}-01`;
   const finMois = new Date(Date.UTC(y, m, 1)).toISOString().slice(0, 10);
@@ -228,7 +264,7 @@ async function trajets(q) {
   if (!domicile) return { erreur: "Adresse du domicile introuvable (ni dans Ximi, ni dans l'app) : renseignez-la dans « Adresse du domicile »." };
 
   // 3) Interventions du mois de cet intervenant (hors annulées)
-  const toutes = await interventionsDuMois(mois);
+  const toutes = await interventionsDuMois(mois, agent);
   const estSienne = (it) => {
     const ids = [idDe(it, 'AgentId', 'Agent.Id', 'ResourceId', 'Resource.Id')]
       .concat((it.AgentIds || []), (it.Agents || []).map(a => a && (a.Id || a.AgentId)));
@@ -288,7 +324,7 @@ async function trajets(q) {
   };
   if (q.debug) retour.debug = {
     total_interventions_mois: toutes.length,
-    format_retenu: formatRetenu ? formatRetenu.f.nom : 'aucun',
+    format_retenu: strategie || (formatRetenu ? formatRetenu.f.nom : 'aucun'),
     essais,
     exemple_intervention: (toutes[0] || echantillon) ? formeAvecDates(toutes[0] || echantillon) : null,
   };
