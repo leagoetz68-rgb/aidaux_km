@@ -1,3 +1,4 @@
+[README (2).md](https://github.com/user-attachments/files/32789358/README.2.md)
 [README (3).md](https://github.com/user-attachments/files/32556151/README.3.md)
 [README.md](https://github.com/user-attachments/files/32053924/README.md)
 # Frais Kilométriques — AID'Aux (Vercel)
@@ -16,6 +17,7 @@ Aucune étape de build : tu peux tout gérer depuis l'éditeur web GitHub, comme
 - `api/adresse.js` — suggestions d'adresses pour l'autocomplétion
 - `lib/geo.js` — géocodage Base Adresse Nationale et calcul d'itinéraire IGN (Géoplateforme)
 - `api/settings.js` — lit / enregistre le domicile d'un salarié
+- `api/beneficiaires.js` — km effectués pour le compte d'un bénéficiaire : trajets, signature, déverrouillage direction
 - `api/auth/login.js` — connexion (email + mot de passe) → jeton de session signé
 - `api/auth/request-reset.js` — envoie un lien de définition de mot de passe par email
 - `api/auth/set-password.js` — valide le lien et enregistre le mot de passe
@@ -79,3 +81,24 @@ Les tables sont créées automatiquement au premier appel à l'API — pas besoi
   si Google ne répond pas. Les adresses restent validées par la Base Adresse Nationale.
 - `ORS_API_KEY` n'est plus obligatoire : si elle est présente, OpenRouteService sert de
   secours quand le service IGN ne répond pas.
+
+## Km pour le compte d'un bénéficiaire
+
+- Dans la vue salarié, le bouton « 🤝 Pour un bénéficiaire » ouvre un second mode, séparé des
+  trajets domicile / 1er-dernier lieu (ces km ne comptent pas dans le forfait journalier).
+- Une feuille = un salarié + un mois + un bénéficiaire. Le nom du bénéficiaire est proposé
+  en autocomplétion et l'orthographe déjà utilisée dans le mois est reprise automatiquement.
+- En fin de mois, « ✍️ Faire signer » : le bénéficiaire (ou son représentant) signe au doigt
+  sur l'écran. La signature, le nom du signataire, la date et le total de km attesté sont
+  enregistrés, et la feuille est verrouillée (plus d'ajout ni de suppression).
+- « 🖨️ Imprimer la feuille » reproduit la feuille papier « Kilomètres effectués pour le compte
+  d'un bénéficiaire » avec la signature (impression ou enregistrement en PDF).
+- Vue direction : tableau de toutes les feuilles du mois (signées ou non), impression de
+  chaque feuille, export CSV, et bouton 🔓 pour retirer une signature si une correction est
+  nécessaire (la feuille devra alors être re-signée).
+- Tarifs (constantes `TAUX_FACTURATION` et `TAUX_REMBOURSEMENT` en haut du script d'`index.html`) :
+  1 € par km facturé au bénéficiaire, 0,40 € par km remboursé au salarié.
+- Vue direction : colonnes « Km bénéf. », « Remb. bénéf. » et « Total à rembourser » (forfait +
+  km bénéficiaires) par salarié. Seules les feuilles signées entrent dans le total à rembourser ;
+  les montants non signés sont affichés à part.
+- Tables : `frais_km_benef_trajets` et `frais_km_benef_signatures`, créées automatiquement.
