@@ -97,24 +97,65 @@ function coordsAdresse(a) {
 }
 const idDe = (x, ...cles) => { for (const c of cles) { const v = c.split('.').reduce((o, k) => (o || {})[k], x); if (v) return v; } return null; };
 
+// Formats de filtre possibles pour /api/interventions/all : la documentation indique
+// « request.filter.start », mais on essaie plusieurs écritures et on garde la première
+// qui renvoie des interventions (mémorisée pour les appels suivants).
+let formatRetenu = null;
+const FORMATS = [
+  { nom: 'request.filter (dates)', p: (d, f) => ({ 'request.filter.start': d, 'request.filter.end': f }) },
+  { nom: 'request.filter (date+heure)', p: (d, f) => ({ 'request.filter.start': d + 'T00:00:00', 'request.filter.end': f + 'T00:00:00' }) },
+  { nom: 'filter', p: (d, f) => ({ 'filter.start': d, 'filter.end': f }) },
+  { nom: 'Filter majuscules', p: (d, f) => ({ 'Filter.Start': d, 'Filter.End': f }) },
+  { nom: 'start/end', p: (d, f) => ({ start: d, end: f }) },
+  { nom: 'startDate/endDate', p: (d, f) => ({ startDate: d, endDate: f }) },
+  { nom: 'request.filter + entité 444', p: (d, f) => ({ 'request.filter.start': d, 'request.filter.end': f, 'request.filter.agencyId': 444 }) },
+  { nom: 'request.filter + entité 690', p: (d, f) => ({ 'request.filter.start': d, 'request.filter.end': f, 'request.filter.agencyId': 690 }) },
+];
+const PAGES = [
+  (o, t) => ({ 'request.offset': o, 'request.top': t, 'request.computeHasMoreRows': 'true' }),
+  (o, t) => ({ Offset: o, Top: t, ComputeHasMoreRows: 'true' }),
+];
+const listeDe = (data) => Array.isArray(data) ? data : ((data && data.Results) || []);
+const debutDe = (it) => String(it.Start || it.PlannedStart || it.StartDate || it.Date || '');
+let essais = [];
+
+async function choisirFormat(debut, fin) {
+  if (formatRetenu) return formatRetenu;
+  essais = [];
+  for (const f of FORMATS) {
+    for (const pg of PAGES) {
+      try {
+        const data = await ximi.get('api/interventions/all', { ...f.p(debut, fin), ...pg(0, 50) });
+        const page = listeDe(data);
+        const dansLePeriode = page.filter(it => { const d = debutDe(it).slice(0, 10); return d >= debut && d < fin; });
+        essais.push({ format: f.nom, pagination: PAGES.indexOf(pg), resultats: page.length, dans_la_periode: dansLePeriode.length });
+        if (dansLePeriode.length) { formatRetenu = { f, pg }; return formatRetenu; }
+      } catch (e) {
+        essais.push({ format: f.nom, pagination: PAGES.indexOf(pg), erreur: String(e.message).slice(0, 120) });
+      }
+    }
+  }
+  return null;
+}
+
 async function interventionsDuMois(mois) {
   const [y, m] = mois.split('-').map(Number);
-  // découpage par semaine, en parallèle : plus rapide sur un mois chargé
+  const nbJours = new Date(y, m, 0).getDate();
+  const debutMois = `${mois}-01`;
+  const finMois = new Date(Date.UTC(y, m, 1)).toISOString().slice(0, 10);
+  const choix = await choisirFormat(debutMois, finMois);
+  if (!choix) return [];
   const bornes = [];
-  for (let d = 1; d <= new Date(y, m, 0).getDate(); d += 7) {
-    const debut = new Date(Date.UTC(y, m - 1, d));
-    const fin = new Date(Date.UTC(y, m - 1, Math.min(d + 7, new Date(y, m, 0).getDate() + 1)));
-    bornes.push([debut.toISOString().slice(0, 10), fin.toISOString().slice(0, 10)]);
+  for (let d = 1; d <= nbJours; d += 7) {
+    bornes.push([new Date(Date.UTC(y, m - 1, d)).toISOString().slice(0, 10),
+                 new Date(Date.UTC(y, m - 1, Math.min(d + 7, nbJours + 1))).toISOString().slice(0, 10)]);
   }
   const morceaux = await Promise.all(bornes.map(async ([debut, fin]) => {
     const res = [];
     let offset = 0;
     for (let i = 0; i < 30; i++) {
-      const data = await ximi.get('api/interventions/all', {
-        'request.filter.start': debut, 'request.filter.end': fin,
-        'request.offset': offset, 'request.top': 1000, 'request.computeHasMoreRows': 'true',
-      });
-      const page = Array.isArray(data) ? data : (data.Results || []);
+      const data = await ximi.get('api/interventions/all', { ...choix.f.p(debut, fin), ...choix.pg(offset, 500) });
+      const page = listeDe(data);
       res.push(...page);
       if (Array.isArray(data) || !data.HasMoreRows || !page.length) break;
       offset += page.length;
@@ -122,7 +163,9 @@ async function interventionsDuMois(mois) {
     return res;
   }));
   const vus = new Set();
-  return morceaux.flat().filter(it => { const k = it.Id || JSON.stringify(it); if (vus.has(k)) return false; vus.add(k); return true; });
+  return morceaux.flat()
+    .filter(it => { const d = debutDe(it).slice(0, 10); return d >= debutMois && d < finMois; }) // filtre de sécurité
+    .filter(it => { const k = it.Id || JSON.stringify(it); if (vus.has(k)) return false; vus.add(k); return true; });
 }
 
 async function trajets(q) {
@@ -162,14 +205,18 @@ async function trajets(q) {
 
   // 3) Interventions du mois de cet intervenant (hors annulées)
   const toutes = await interventionsDuMois(mois);
-  const siennes = toutes.filter(it => String(idDe(it, 'AgentId', 'Agent.Id') || '') === String(agent.Id))
+  const estSienne = (it) => {
+    const ids = [idDe(it, 'AgentId', 'Agent.Id', 'ResourceId', 'Resource.Id')]
+      .concat((it.AgentIds || []), (it.Agents || []).map(a => a && (a.Id || a.AgentId)));
+    return ids.some(x => x != null && String(x) === String(agent.Id));
+  };
+  const siennes = toutes.filter(estSienne)
     .filter(it => !/cancel|annul|-100/i.test(String(it.Status ?? '')));
-  const exemple = toutes[0] ? Object.keys(toutes[0]).sort() : [];
 
   // 4) Par jour : 1re et dernière intervention
   const parJour = {};
   siennes.forEach(it => {
-    const debut = it.Start || it.PlannedStart;
+    const debut = debutDe(it);
     if (!debut) return;
     const jour = String(debut).slice(0, 10);
     (parJour[jour] = parJour[jour] || []).push(it);
@@ -189,7 +236,7 @@ async function trajets(q) {
   const jours = Object.keys(parJour).sort();
   const legs = [], avertissements = [];
   for (const jour of jours) {
-    const liste = parJour[jour].sort((a, b) => String(a.Start || a.PlannedStart).localeCompare(String(b.Start || b.PlannedStart)));
+    const liste = parJour[jour].sort((a, b) => debutDe(a).localeCompare(debutDe(b)));
     const [premier, dernier] = [liste[0], liste[liste.length - 1]];
     const [aPremier, aDernier] = await Promise.all([adresseIntervention(premier), adresseIntervention(dernier)]);
     if (!aPremier || !aDernier) { avertissements.push(`${jour} : adresse client introuvable dans Ximi`); continue; }
@@ -215,7 +262,12 @@ async function trajets(q) {
     intervenant: `${agent.FirstName || ''} ${agent.LastName || ''}`.trim(),
     domicile: domicile.label, nb_interventions: siennes.length, trajets: resultat, avertissements,
   };
-  if (q.debug) retour.debug = { champs_intervention: exemple, total_interventions_mois: toutes.length };
+  if (q.debug) retour.debug = {
+    total_interventions_mois: toutes.length,
+    format_retenu: formatRetenu ? formatRetenu.f.nom : 'aucun',
+    essais,
+    exemple_intervention: toutes[0] ? forme(toutes[0]) : null,
+  };
   return retour;
 }
 
