@@ -21,7 +21,7 @@ module.exports = async (req, res) => {
         `SELECT id, date::text as date, depart, arrivee, km::float as km
          FROM frais_km_trajets
          WHERE salarie = $1 AND mois = $2
-         ORDER BY date ASC`,
+         ORDER BY date ASC, id ASC`,  // id croissant = ordre de saisie : l'aller avant le retour
         [salarie, mois]
       );
       res.status(200).json(rows);
