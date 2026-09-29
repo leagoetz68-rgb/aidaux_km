@@ -309,6 +309,21 @@
   #view-direction .btn-login:hover{ background: var(--navy); }
   #view-direction .table-wrap{ overflow-x:auto; }
 
+  /* ===== Import depuis Ximi ===== */
+  .ximi-card{ border: 1.5px solid var(--teal); }
+  .ximi-intro{ font-size:12.5px; color: var(--ink-soft); margin: 4px 0 12px; line-height:1.45; }
+  .btn-ximi{ background: var(--navy); color:white; width:100%; }
+  .btn-ximi:hover{ background: var(--navy-bright); }
+  .ximi-result{ margin-top:12px; }
+  .ximi-list{ list-style:none; padding:0; margin:8px 0 0; max-height:380px; overflow-y:auto; border:1px solid var(--line); border-radius:10px; }
+  .ximi-list li{ display:flex; gap:10px; align-items:flex-start; padding:8px 10px; border-bottom:1px solid var(--line); font-size:12.5px; }
+  .ximi-list li:last-child{ border-bottom:none; }
+  .ximi-list li.deja{ opacity:0.5; }
+  .ximi-list input{ width:16px; height:16px; margin-top:2px; accent-color: var(--teal); flex-shrink:0; }
+  .ximi-list .d{ font-weight:600; white-space:nowrap; min-width:88px; }
+  .ximi-list .k{ font-family: var(--font-mono); color: var(--teal); font-weight:600; margin-left:auto; white-space:nowrap; }
+  .ximi-warn{ background: var(--coral-wash); color:#8a3220; border-radius:10px; padding:8px 12px; font-size:12.5px; margin-top:10px; }
+
   /* ===== Km pour le compte d'un bénéficiaire ===== */
   .mode-switch{
     display:flex; gap:4px; background: var(--surface); border-radius: 999px; padding:4px;
@@ -429,6 +444,14 @@
     </div>
 
     <div id="mode-perso">
+    <div class="card ximi-card no-print">
+      <div class="section-label"><span class="dot"></span>Depuis le planning Ximi</div>
+      <p class="ximi-intro">Calcule tout seul les trajets du mois d'après votre planning Ximi : chaque jour travaillé,
+        domicile → 1re intervention et dernière intervention → domicile. Vous vérifiez, puis vous ajoutez.</p>
+      <button class="btn btn-ximi" id="btn-ximi" type="button">📥 Importer mes trajets du mois depuis Ximi</button>
+      <div id="ximi-result" class="ximi-result" style="display:none;"></div>
+    </div>
+
     <div class="card">
       <div class="section-label"><span class="dot"></span>Ajouter un trajet</div>
       <div class="field-row">
@@ -1325,6 +1348,71 @@ window.KmBenef = (function(){
     if(!els.fDepart.value) copyAddr(els.domicile, els.fDepart);
   });
   els.mois.addEventListener('change', loadEntries);
+
+  // --- Import des trajets depuis le planning Ximi ---
+  let propositionsXimi = [];
+  function dateLabel(iso){
+    return new Date(iso + 'T00:00:00').toLocaleDateString('fr-FR', { weekday:'short', day:'2-digit', month:'2-digit' });
+  }
+  async function importerDepuisXimi(){
+    const salarie = currentSalarie();
+    const box = document.getElementById('ximi-result');
+    const btn = document.getElementById('btn-ximi');
+    if(!salarie){ showToast('Merci de renseigner le nom du salarié'); return; }
+    btn.disabled = true; btn.textContent = '⏳ Lecture du planning Ximi…';
+    box.style.display = 'block';
+    box.innerHTML = '<div class="loading-row">Lecture du planning et calcul des kilomètres… (jusqu\'à une minute)</div>';
+    try{
+      const params = new URLSearchParams({ action:'trajets', salarie, mois: currentMois(), domicile: els.domicile.value.trim() });
+      if(els.domicile.dataset.lon){ params.set('dlon', els.domicile.dataset.lon); params.set('dlat', els.domicile.dataset.lat); }
+      const res = await fetch('/api/ximi?' + params.toString());
+      const data = await res.json();
+      if(!res.ok || data.error) throw new Error(data.error || 'Erreur serveur');
+      if(data.erreur){ box.innerHTML = `<div class="ximi-warn">${escapeHtml(data.erreur)}</div>`; return; }
+      const dejaSaisis = new Set(entries.map(e => e.date));
+      propositionsXimi = (data.trajets || []).map((t, i) => ({ ...t, i, deja: dejaSaisis.has(t.date) }));
+      if(!propositionsXimi.length){
+        box.innerHTML = `<div class="ximi-warn">Aucune intervention trouvée dans Ximi pour ${escapeHtml(data.intervenant || salarie)} ce mois-ci.</div>`;
+        return;
+      }
+      const nbJours = new Set(propositionsXimi.map(t => t.date)).size;
+      box.innerHTML = `
+        <div style="font-size:12.5px;color:var(--ink-soft);">
+          <strong>${escapeHtml(data.intervenant)}</strong> — ${nbJours} jour(s) travaillé(s), domicile : ${escapeHtml(data.domicile)}.
+          Les jours déjà saisis dans l'app sont décochés.
+        </div>
+        <ul class="ximi-list">${propositionsXimi.map(t => `
+          <li class="${t.deja ? 'deja' : ''}">
+            <input type="checkbox" data-i="${t.i}" ${t.deja ? '' : 'checked'}>
+            <span class="d">${dateLabel(t.date)}</span>
+            <span>${escapeHtml(t.depart)} → ${escapeHtml(t.arrivee)}${t.deja ? ' <em>(jour déjà saisi)</em>' : ''}</span>
+            <span class="k">${fmtKm(t.km)}</span>
+          </li>`).join('')}
+        </ul>
+        ${(data.avertissements || []).length ? `<div class="ximi-warn">⚠ ${data.avertissements.map(escapeHtml).join('<br>⚠ ')}</div>` : ''}
+        <button class="btn btn-primary" id="btn-ximi-ajouter" type="button">+ Ajouter les trajets cochés</button>`;
+      document.getElementById('btn-ximi-ajouter').addEventListener('click', ajouterPropositionsXimi);
+    }catch(e){
+      box.innerHTML = `<div class="ximi-warn">Import impossible : ${escapeHtml(e.message)}</div>`;
+    }finally{
+      btn.disabled = false; btn.textContent = '📥 Importer mes trajets du mois depuis Ximi';
+    }
+  }
+  async function ajouterPropositionsXimi(){
+    const box = document.getElementById('ximi-result');
+    const choisis = [...box.querySelectorAll('input[type=checkbox]:checked')].map(c => propositionsXimi[Number(c.dataset.i)]);
+    if(!choisis.length){ showToast('Aucun trajet coché'); return; }
+    const btn = document.getElementById('btn-ximi-ajouter');
+    btn.disabled = true; btn.textContent = 'Ajout en cours…';
+    let ok = 0;
+    for(const t of choisis){
+      try{ await postLeg(currentSalarie(), currentMois(), t.date, t.depart, t.arrivee, t.km); ok++; }catch(e){}
+    }
+    await loadEntries();
+    box.innerHTML = `<div class="ximi-intro">✓ ${ok} trajet(s) ajouté(s) depuis Ximi.</div>`;
+    showToast(ok + ' trajet(s) ajouté(s) ✓');
+  }
+  document.getElementById('btn-ximi').addEventListener('click', importerDepuisXimi);
 
   // Outils partagés avec le mode « Pour un bénéficiaire »
   window.KmHelpers = { attachAutocomplete, autoCalcKm, setAddr, copyAddr, escapeHtml, fmtKm, showToast, todayMonth, todayISO };
