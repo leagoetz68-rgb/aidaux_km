@@ -23,6 +23,22 @@ function forme(obj, prof = 0) {
   return String(obj).trim() ? 'texte' : 'texte vide';
 }
 
+// Comme forme(), mais affiche les valeurs des champs de date / d'identifiant (pas de données personnelles)
+function formeAvecDates(obj, prof = 0) {
+  if (Array.isArray(obj)) return obj.length ? [formeAvecDates(obj[0], prof + 1)] : 'liste vide';
+  if (obj && typeof obj === 'object') {
+    if (prof > 3) return 'objet';
+    const o = {};
+    Object.keys(obj).sort().forEach(k => {
+      const v = obj[k];
+      o[k] = (/date|start|end|time|begin|from|day|status|^id$|id$/i.test(k) && (typeof v !== 'object' || v === null))
+        ? v : formeAvecDates(v, prof + 1);
+    });
+    return o;
+  }
+  return forme(obj);
+}
+
 async function diag() {
   const res = { documentation: null, operations: {}, modeles: {}, exemples: {} };
   let spec = null;
@@ -101,7 +117,12 @@ const idDe = (x, ...cles) => { for (const c of cles) { const v = c.split('.').re
 // « request.filter.start », mais on essaie plusieurs écritures et on garde la première
 // qui renvoie des interventions (mémorisée pour les appels suivants).
 let formatRetenu = null;
+const frDate = (iso) => iso.slice(8, 10) + '/' + iso.slice(5, 7) + '/' + iso.slice(0, 4);
 const FORMATS = [
+  { nom: 'request.filter (ISO Z)', p: (d, f) => ({ 'request.filter.start': d + 'T00:00:00Z', 'request.filter.end': f + 'T00:00:00Z' }) },
+  { nom: 'request.filter (ISO +02:00)', p: (d, f) => ({ 'request.filter.start': d + 'T00:00:00+02:00', 'request.filter.end': f + 'T00:00:00+02:00' }) },
+  { nom: 'request.filter (JJ/MM/AAAA)', p: (d, f) => ({ 'request.filter.start': frDate(d), 'request.filter.end': frDate(f) }) },
+  { nom: 'request.filter + statut tous', p: (d, f) => ({ 'request.filter.start': d, 'request.filter.end': f, 'request.filter.status': '' }) },
   { nom: 'request.filter (dates)', p: (d, f) => ({ 'request.filter.start': d, 'request.filter.end': f }) },
   { nom: 'request.filter (date+heure)', p: (d, f) => ({ 'request.filter.start': d + 'T00:00:00', 'request.filter.end': f + 'T00:00:00' }) },
   { nom: 'filter', p: (d, f) => ({ 'filter.start': d, 'filter.end': f }) },
@@ -116,8 +137,10 @@ const PAGES = [
   (o, t) => ({ Offset: o, Top: t, ComputeHasMoreRows: 'true' }),
 ];
 const listeDe = (data) => Array.isArray(data) ? data : ((data && data.Results) || []);
-const debutDe = (it) => String(it.Start || it.PlannedStart || it.StartDate || it.Date || '');
+const debutDe = (it) => String(it.Start || it.PlannedStart || it.StartDate || it.Begin || it.BeginDate ||
+  it.From || it.Date || it.Day || (it.Schedule || {}).Start || '');
 let essais = [];
+let echantillon = null;
 
 async function choisirFormat(debut, fin) {
   if (formatRetenu) return formatRetenu;
@@ -127,6 +150,7 @@ async function choisirFormat(debut, fin) {
       try {
         const data = await ximi.get('api/interventions/all', { ...f.p(debut, fin), ...pg(0, 50) });
         const page = listeDe(data);
+        if (page.length && !echantillon) echantillon = page[0];
         const dansLePeriode = page.filter(it => { const d = debutDe(it).slice(0, 10); return d >= debut && d < fin; });
         essais.push({ format: f.nom, pagination: PAGES.indexOf(pg), resultats: page.length, dans_la_periode: dansLePeriode.length });
         if (dansLePeriode.length) { formatRetenu = { f, pg }; return formatRetenu; }
@@ -266,7 +290,7 @@ async function trajets(q) {
     total_interventions_mois: toutes.length,
     format_retenu: formatRetenu ? formatRetenu.f.nom : 'aucun',
     essais,
-    exemple_intervention: toutes[0] ? forme(toutes[0]) : null,
+    exemple_intervention: (toutes[0] || echantillon) ? formeAvecDates(toutes[0] || echantillon) : null,
   };
   return retour;
 }
