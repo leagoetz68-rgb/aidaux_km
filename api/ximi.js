@@ -161,6 +161,44 @@ async function choisirFormat(debut, fin) {
   return null;
 }
 
+// Récupère TOUTES les pages d'une recherche : Ximi peut limiter la taille des pages
+// (ex. 50 lignes même si on en demande 500). On lit le nombre total (Hitcount),
+// puis on charge les pages restantes par lots en parallèle.
+async function toutesLesPages(filtres) {
+  const TAILLE = 500, MAX_LIGNES = 30000;
+  const premiere = await ximi.get('api/interventions/all', {
+    ...filtres, 'request.offset': 0, 'request.top': TAILLE,
+    'request.computeHitCount': 'true', 'request.computeHasMoreRows': 'true',
+  });
+  const res = [...listeDe(premiere)];
+  const pas = res.length;                       // taille réelle d'une page
+  if (!pas || Array.isArray(premiere)) return res;
+  const total = Number(premiere.Hitcount) || 0;
+  if (total > pas) {
+    const offsets = [];
+    for (let o = pas; o < Math.min(total, MAX_LIGNES); o += pas) offsets.push(o);
+    for (let i = 0; i < offsets.length; i += 8) {
+      const lots = await Promise.all(offsets.slice(i, i + 8).map(o =>
+        ximi.get('api/interventions/all', { ...filtres, 'request.offset': o, 'request.top': TAILLE })
+          .then(listeDe).catch(() => [])));
+      lots.forEach(l => res.push(...l));
+    }
+  } else if (premiere.HasMoreRows) {
+    // pas de total connu : on avance page par page tant qu'il en reste
+    let offset = pas;
+    for (let i = 0; i < 600 && offset < MAX_LIGNES; i++) {
+      const data = await ximi.get('api/interventions/all', {
+        ...filtres, 'request.offset': offset, 'request.top': TAILLE, 'request.computeHasMoreRows': 'true' });
+      const page = listeDe(data);
+      res.push(...page);
+      if (!data.HasMoreRows || !page.length) break;
+      offset += page.length;
+    }
+  }
+  const vus = new Set();
+  return res.filter(it => { const k = it.Id; if (k == null) return true; if (vus.has(k)) return false; vus.add(k); return true; });
+}
+
 // Stratégie principale : recherche texte (request.search) sur le nom de l'intervenant,
 // toutes dates confondues, puis tri local par intervenant et par mois.
 let strategie = '';
@@ -171,20 +209,11 @@ async function interventionsParRecherche(agent, debutMois, finMois) {
     `${agent.LastName || ''} ${agent.FirstName || ''}`.trim(),
   ].filter(Boolean))];
   for (const terme of termes) {
-    const res = [];
-    let offset = 0;
-    for (let i = 0; i < 20; i++) {
-      const data = await ximi.get('api/interventions/all', {
-        'request.search': terme, 'request.offset': offset, 'request.top': 500, 'request.computeHasMoreRows': 'true',
-      });
-      const page = listeDe(data);
-      res.push(...page);
-      if (Array.isArray(data) || !data.HasMoreRows || !page.length) break;
-      offset += page.length;
-    }
+    const res = await toutesLesPages({ 'request.search': terme });
     const siennes = res.filter(it => String(((it.Agent || {}).Id) || it.AgentId || '') === String(agent.Id));
     const duMois = siennes.filter(it => { const d = debutDe(it).slice(0, 10); return d >= debutMois && d < finMois; });
-    essais.push({ format: `recherche « ${terme} »`, resultats: res.length, de_l_intervenant: siennes.length, dans_la_periode: duMois.length });
+    essais.push({ format: `recherche « ${terme} »`, resultats: res.length, de_l_intervenant: siennes.length,
+      dans_la_periode: duMois.length, jours: new Set(duMois.map(it => debutDe(it).slice(0, 10))).size });
     if (duMois.length) { strategie = `recherche « ${terme} »`; return duMois; }
     if (!echantillon && res.length) echantillon = res[0];
   }
