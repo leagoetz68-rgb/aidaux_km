@@ -710,7 +710,7 @@
 <script>
 /* ======================= PARTAGÉ : feuille bénéficiaire ======================= */
 // Reproduit la feuille papier « Kilomètres effectués pour le compte d'un bénéficiaire »,
-// avec la signature, et l'imprime (ou l'enregistre en PDF) dans une nouvelle fenêtre.
+// avec la signature, et la télécharge en PDF (généré dans le navigateur avec jsPDF).
 window.KmBenef = (function(){
   // Tarifs des km effectués pour le compte d'un bénéficiaire
   const TAUX_FACTURATION = 1;      // € par km facturé au client (bénéficiaire)
@@ -728,73 +728,131 @@ window.KmBenef = (function(){
   function dateFr(iso){ return new Date(iso + 'T00:00:00').toLocaleDateString('fr-FR'); }
   function totalKm(trajets){ return trajets.reduce((s, t) => s + Number(t.km || 0), 0); }
 
+  // ---------- Feuille PDF (même mise en page que la feuille papier) ----------
+  const JSPDF_URL = 'https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js';
+  let jspdfPromise = null;
+  function loadJsPdf(){
+    if(window.jspdf && window.jspdf.jsPDF) return Promise.resolve(window.jspdf.jsPDF);
+    if(!jspdfPromise){
+      jspdfPromise = new Promise((resolve, reject) => {
+        const s = document.createElement('script');
+        s.src = JSPDF_URL;
+        s.onload = () => resolve(window.jspdf.jsPDF);
+        s.onerror = () => { jspdfPromise = null; reject(new Error('Chargement du générateur PDF impossible')); };
+        document.head.appendChild(s);
+      });
+    }
+    return jspdfPromise;
+  }
+  function slug(str){
+    return String(str || '').normalize('NFD').replace(/[\u0300-\u036f]/g, '')
+      .replace(/[^a-zA-Z0-9]+/g, '_').replace(/^_+|_+$/g, '') || 'feuille';
+  }
+
   // sheet = { salarie, mois, beneficiaire, trajets: [...], signature: {signataire, signature, signe_le} | null }
-  function print(sheet){
+  async function downloadPdf(sheet){
+    let jsPDF;
+    try{ jsPDF = await loadJsPdf(); }
+    catch(e){ alert('Impossible de générer le PDF (connexion ?). Réessayez.'); return; }
+
+    const doc = new jsPDF({ orientation: 'landscape', unit: 'mm', format: 'a4' });
+    const W = 297, H = 210, M = 12, tableW = W - 2 * M;
     const trajets = sheet.trajets.slice().sort((a, b) => a.date.localeCompare(b.date));
     const total = totalKm(trajets);
-    let rows = trajets.map(t => `<tr>
-        <td>${esc(dateFr(t.date))}</td><td>${esc(sheet.beneficiaire)}</td>
-        <td>${esc(t.depart)}</td><td>${esc(t.arrivee)}</td><td class="num">${fmtKmNum(t.km)}</td></tr>`).join('');
-    for(let i = trajets.length; i < 8; i++) rows += '<tr><td></td><td></td><td></td><td></td><td></td></tr>';
+    doc.setTextColor(0); doc.setDrawColor(0); doc.setLineWidth(0.3);
 
+    // Titre
+    const title = "Kilomètres effectués pour le compte d'un bénéficiaire";
+    doc.setFont('helvetica', 'bold'); doc.setFontSize(16);
+    const tw = doc.getTextWidth(title);
+    doc.text(title, W / 2, 18, { align: 'center' });
+    doc.line(W / 2 - tw / 2, 19.3, W / 2 + tw / 2, 19.3);
+
+    // Mois / salarié
+    doc.setFontSize(11);
+    const meta = (label, value, y) => {
+      doc.setFont('helvetica', 'normal');
+      doc.text(label, M, y);
+      const lw = doc.getTextWidth(label);
+      doc.line(M, y + 0.9, M + lw, y + 0.9);
+      doc.text(String(value || ''), M + lw + 3, y);
+    };
+    meta('MOIS CONCERNÉ :', moisLabel(sheet.mois), 32);
+    meta('NOM DU SALARIÉ :', sheet.salarie, 39);
+
+    // Cadre « Réservé à la direction »
+    const bx = W - M - 82, by = 26;
+    doc.setFillColor(235, 235, 235);
+    doc.rect(bx, by, 82, 7, 'FD');
+    doc.setFontSize(10);
+    doc.text('Réservé à la direction', bx + 41, by + 4.8, { align: 'center' });
+    doc.rect(bx, by + 7, 40, 11); doc.rect(bx + 40, by + 7, 42, 11);
+    doc.setFont('helvetica', 'bold'); doc.setFontSize(7.5);
+    doc.text(['TOTAL KILOMÈTRES DU', 'MOIS :'], bx + 20, by + 11.5, { align: 'center' });
+    doc.setFontSize(12);
+    doc.text(fmtKmNum(total) + ' km', bx + 61, by + 14.2, { align: 'center' });
+
+    // Tableau
+    const cols = [
+      { h: 'Date', w: 30 }, { h: 'Nom du bénéficiaire', w: 50 },
+      { h: 'Adresse de départ', w: 80 }, { h: "Adresse d'arrivée", w: 80 },
+      { h: 'Nombre de kilomètres', w: tableW - 240, right: true },
+    ];
+    let y = 48;
+    const drawRow = (cells, opts = {}) => {
+      doc.setFont('helvetica', opts.bold ? 'bold' : 'normal'); doc.setFontSize(10);
+      const lines = cells.map((c, i) => doc.splitTextToSize(String(c || ''), cols[i].w - 4));
+      const h = Math.max(8, Math.max(...lines.map(l => l.length)) * 4.3 + 3.5);
+      if(y + h > H - M){ doc.addPage(); y = M; }
+      let x = M;
+      cols.forEach((col, i) => {
+        doc.rect(x, y, col.w, h);
+        if(lines[i].length){
+          if(col.right && !opts.header) doc.text(lines[i], x + col.w - 2, y + 5.3, { align: 'right' });
+          else doc.text(lines[i], x + 2, y + 5.3);
+          if(opts.header){ const lw = doc.getTextWidth(lines[i][0]); doc.line(x + 2, y + 6.1, x + 2 + lw, y + 6.1); }
+        }
+        x += col.w;
+      });
+      y += h;
+    };
+    drawRow(cols.map(c => c.h), { header: true });
+    trajets.forEach(t => drawRow([dateFr(t.date), sheet.beneficiaire, t.depart, t.arrivee, fmtKmNum(t.km)]));
+    for(let i = trajets.length; i < 8; i++) drawRow(['', '', '', '', '']);
+    // Ligne total
+    if(y + 8 > H - M){ doc.addPage(); y = M; }
+    doc.rect(M, y, tableW - cols[4].w, 8); doc.rect(M + tableW - cols[4].w, y, cols[4].w, 8);
+    doc.setFont('helvetica', 'bold');
+    doc.text('Total', M + tableW - cols[4].w - 2, y + 5.3, { align: 'right' });
+    doc.text(fmtKmNum(total), M + tableW - 2, y + 5.3, { align: 'right' });
+    y += 14;
+
+    // Attestation + signature
     const sig = sheet.signature;
-    const sigBlock = sig
-      ? `<div class="sig">
-           <p>Je soussigné(e) <strong>${esc(sig.signataire)}</strong> atteste que <strong>${esc(sheet.salarie)}</strong>
-           a effectué pour le compte de <strong>${esc(sheet.beneficiaire)}</strong> les trajets ci-dessus, soit
-           <strong>${fmtKmNum(total)} km</strong> au cours du mois de ${esc(moisLabel(sheet.mois).toLowerCase())}.</p>
-           <p class="small">Signé électroniquement le ${esc(new Date(sig.signe_le).toLocaleString('fr-FR', { dateStyle:'short', timeStyle:'short' }))}</p>
-           <img src="${sig.signature}" alt="Signature">
-         </div>`
-      : `<div class="sig"><p>Signature du bénéficiaire :</p><div class="sig-empty"></div></div>`;
+    doc.setFontSize(10.5);
+    if(y + 40 > H - M){ doc.addPage(); y = M + 6; }
+    if(sig){
+      doc.setFont('helvetica', 'normal');
+      const txt = `Je soussigné(e) ${sig.signataire} atteste que ${sheet.salarie} a effectué pour le compte de ` +
+        `${sheet.beneficiaire} les trajets ci-dessus, soit ${fmtKmNum(total)} km au cours du mois de ` +
+        `${moisLabel(sheet.mois).toLowerCase()}.`;
+      const lines = doc.splitTextToSize(txt, tableW);
+      doc.text(lines, M, y); y += lines.length * 4.6 + 1;
+      doc.setFontSize(8.5); doc.setTextColor(90);
+      doc.text('Signé électroniquement le ' + new Date(sig.signe_le).toLocaleString('fr-FR', { dateStyle: 'short', timeStyle: 'short' }), M, y);
+      doc.setTextColor(0); y += 3;
+      try{
+        const p = doc.getImageProperties(sig.signature);
+        const ih = 26, iw = Math.min(90, ih * p.width / p.height);
+        doc.addImage(sig.signature, 'PNG', M, y, iw, iw * p.height / p.width);
+      }catch(e){ /* signature illisible : on garde le texte */ }
+    } else {
+      doc.setFont('helvetica', 'normal');
+      doc.text('Signature du bénéficiaire :', M, y);
+      doc.rect(M, y + 3, 80, 26);
+    }
 
-    const html = `<!DOCTYPE html><html lang="fr"><head><meta charset="UTF-8">
-<title>Km bénéficiaire — ${esc(sheet.beneficiaire)} — ${esc(sheet.mois)}</title>
-<style>
-  @page{ size: A4 landscape; margin: 12mm; }
-  body{ font-family: Arial, Helvetica, sans-serif; color:#000; font-size:12px; margin:0; }
-  h1{ text-align:center; font-size:19px; text-decoration:underline; margin:0 0 14px; }
-  .top{ display:flex; justify-content:space-between; align-items:flex-end; gap:20px; margin-bottom:10px; }
-  .meta p{ margin:4px 0; font-size:13px; } .meta u{ margin-right:6px; }
-  .dir{ border:1px solid #000; width:260px; }
-  .dir .h{ text-align:center; padding:5px; background:#eee; border-bottom:1px solid #000; }
-  .dir .b{ display:flex; } .dir .b div{ padding:6px; }
-  .dir .b div:first-child{ border-right:1px solid #000; font-weight:bold; font-size:10px; width:120px; text-align:center; }
-  .dir .b div:last-child{ flex:1; text-align:center; font-weight:bold; font-size:14px; }
-  table{ width:100%; border-collapse:collapse; }
-  th, td{ border:1px solid #000; padding:6px; height:24px; text-align:left; }
-  th{ font-weight:normal; text-decoration:underline; }
-  td.num{ text-align:right; }
-  tfoot td{ font-weight:bold; }
-  .sig{ margin-top:14px; page-break-inside:avoid; }
-  .sig p{ margin:3px 0; font-size:12.5px; } .sig .small{ font-size:10.5px; color:#444; }
-  .sig img{ max-height:90px; margin-top:4px; }
-  .sig-empty{ border:1px solid #000; width:260px; height:80px; margin-top:4px; }
-</style></head><body>
-  <h1>Kilomètres effectués pour le compte d'un bénéficiaire</h1>
-  <div class="top">
-    <div class="meta">
-      <p><u>MOIS CONCERNÉ:</u> ${esc(moisLabel(sheet.mois))}</p>
-      <p><u>NOM DU SALARIÉ:</u> ${esc(sheet.salarie)}</p>
-    </div>
-    <div class="dir">
-      <div class="h">Réservé à la direction</div>
-      <div class="b"><div>TOTAL KILOMÈTRES DU MOIS:</div><div>${fmtKmNum(total)} km</div></div>
-    </div>
-  </div>
-  <table>
-    <thead><tr><th style="width:12%">Date</th><th style="width:20%">Nom du bénéficiaire</th>
-      <th>Adresse de départ</th><th>Adresse d'arrivée</th><th style="width:13%">Nombre de kilomètres</th></tr></thead>
-    <tbody>${rows}</tbody>
-    <tfoot><tr><td colspan="4" style="text-align:right;">Total</td><td class="num">${fmtKmNum(total)}</td></tr></tfoot>
-  </table>
-  ${sigBlock}
-  <script>window.onload = function(){ setTimeout(function(){ window.print(); }, 200); };<\/script>
-</body></html>`;
-
-    const w = window.open('', '_blank');
-    if(!w){ alert("Impossible d'ouvrir la feuille : autorisez les fenêtres pop-up pour ce site."); return; }
-    w.document.open(); w.document.write(html); w.document.close();
+    doc.save(`km_beneficiaire_${slug(sheet.beneficiaire)}_${sheet.mois}.pdf`);
   }
 
   // Regroupe les trajets par (salarié, bénéficiaire) et y rattache la signature
@@ -827,7 +885,7 @@ window.KmBenef = (function(){
     return out;
   }
 
-  return { print, groupSheets, totalKm, moisLabel, fmtKmNum, fmtEuro, montant, remboursementsParSalarie,
+  return { downloadPdf, groupSheets, totalKm, moisLabel, fmtKmNum, fmtEuro, montant, remboursementsParSalarie,
            TAUX_FACTURATION, TAUX_REMBOURSEMENT };
 })();
 
@@ -1421,7 +1479,7 @@ window.KmBenef = (function(){
           ${sigInfo}
           <div class="sheet-actions">
             ${signed ? '' : `<button class="btn btn-sign btn-sm" data-sign="${idx}" ${sh.trajets.length ? '' : 'disabled'}>✍️ Faire signer</button>`}
-            <button class="btn btn-ghost btn-sm" data-print="${idx}">🖨️ Imprimer la feuille</button>
+            <button class="btn btn-ghost btn-sm" data-print="${idx}">⬇️ Télécharger en PDF</button>
           </div>
         </div>`;
     }).join('');
@@ -1429,7 +1487,7 @@ window.KmBenef = (function(){
     els.sheetsWrap.querySelectorAll('.leg-del').forEach(btn => btn.addEventListener('click', () => deleteTrip(btn.dataset.id)));
     els.sheetsWrap.querySelectorAll('[data-sign]').forEach(btn => btn.addEventListener('click', () => openSign(sheets[Number(btn.dataset.sign)])));
     els.sheetsWrap.querySelectorAll('[data-print]').forEach(btn => btn.addEventListener('click', () => {
-      window.KmBenef.print({ ...sheets[Number(btn.dataset.print)], salarie: salarie() });
+      window.KmBenef.downloadPdf({ ...sheets[Number(btn.dataset.print)], salarie: salarie() });
     }));
   }
 
@@ -1832,7 +1890,7 @@ window.KmBenef = (function(){
         <td class="num forfait">${B.fmtEuro(B.montant(km, B.TAUX_REMBOURSEMENT))}</td>
         <td>${status}</td>
         <td class="row-actions">
-          <button class="tab-btn" data-bprint="${idx}" type="button">🖨️ Feuille</button>
+          <button class="tab-btn" data-bprint="${idx}" type="button">⬇️ PDF</button>
           ${sig ? `<button class="tab-btn" data-bunlock="${idx}" type="button" title="Retirer la signature pour permettre une correction">🔓</button>` : ''}
         </td>
       </tr>`;
@@ -1845,7 +1903,7 @@ window.KmBenef = (function(){
           <td class="num">${B.fmtEuro(B.montant(totalKm, B.TAUX_FACTURATION))}</td><td class="num">${B.fmtEuro(B.montant(totalKm, B.TAUX_REMBOURSEMENT))}</td><td colspan="2"></td></tr></tfoot>
       </table>`;
     els.benefWrap.querySelectorAll('[data-bprint]').forEach(b => b.addEventListener('click', () => {
-      window.KmBenef.print(benefSheets[Number(b.dataset.bprint)]);
+      window.KmBenef.downloadPdf(benefSheets[Number(b.dataset.bprint)]);
     }));
     els.benefWrap.querySelectorAll('[data-bunlock]').forEach(b => b.addEventListener('click', () => unlockBenef(benefSheets[Number(b.dataset.bunlock)])));
   }
@@ -2042,3 +2100,107 @@ window.KmBenef = (function(){
 </script>
 </body>
 </html>
+
+[README (3).md](https://github.com/user-attachments/files/32556151/README.3.md)
+[README.md](https://github.com/user-attachments/files/32053924/README.md)
+# Frais Kilométriques — AID'Aux (Vercel)
+
+Site statique + fonctions serverless Node.js, base de données Postgres.
+Aucune étape de build : tu peux tout gérer depuis l'éditeur web GitHub, comme tes autres apps.
+
+## Fichiers
+
+- `index.html` — l'application (design identique à la version d'origine)
+- `admin.html` — vue direction autonome (mêmes comptes que ci-dessous)
+- `reset.html` — page « mot de passe oublié / définir le mot de passe »
+- `api/trajets.js` — liste / ajoute / réinitialise les trajets d'un mois
+- `api/trajets/[id].js` — supprime un trajet précis
+- `api/distance.js` — calcule les km entre deux adresses (BAN + itinéraire IGN)
+- `api/adresse.js` — suggestions d'adresses pour l'autocomplétion
+- `lib/geo.js` — géocodage Base Adresse Nationale et calcul d'itinéraire IGN (Géoplateforme)
+- `api/settings.js` — lit / enregistre le domicile d'un salarié
+- `api/beneficiaires.js` — km effectués pour le compte d'un bénéficiaire : trajets, signature, déverrouillage direction
+- `api/auth/login.js` — connexion (email + mot de passe) → jeton de session signé
+- `api/auth/request-reset.js` — envoie un lien de définition de mot de passe par email
+- `api/auth/set-password.js` — valide le lien et enregistre le mot de passe
+- `lib/db.js` — connexion Postgres pour les données de trajets
+- `lib/authdb.js` — connexion à la base de comptes partagée (`comptes` / `comptes_tokens`)
+- `lib/passwordHash.js` — hachage/vérification compatible avec Werkzeug (scrypt), pour que
+  la même table de comptes serve aussi bien les applis Flask que celle-ci
+- `lib/sessionToken.js` — jetons de session signés (HMAC), sans état côté serveur
+- `lib/mail.js` — envoi d'email via l'API Brevo
+- `sql/schema.sql` — le schéma des trajets, pour référence ou exécution manuelle
+- `package.json` — dépendance `pg`
+
+## Déploiement
+
+1. **GitHub** : crée un nouveau repo et uploade tous ces fichiers en conservant l'arborescence
+   (`api/trajets/[id].js` doit bien être dans un sous-dossier `trajets`, `api/auth/*.js` dans
+   un sous-dossier `auth`).
+2. **Vercel** : sur vercel.com, "Add New Project" → importe ce repo. Aucune configuration
+   de build n'est nécessaire (Vercel détecte les fichiers `/api` automatiquement).
+3. **Base de données** : dans les réglages du projet Vercel → *Environment Variables*,
+   ajoute une variable `DATABASE_URL` avec une chaîne de connexion Postgres (les trajets).
+   - Tu peux réutiliser ta base Neon existante (créer une nouvelle base ou juste un nouveau
+     schéma dans le même projet Neon, pour ne pas mélanger avec les autres apps), ou
+   - créer une base Neon dédiée à cette app.
+4. **Comptes (login direction)** : ajoute aussi ces variables :
+   - `AUTH_DATABASE_URL` : l'URL de la base Neon partagée par toutes les applis AID'Aux
+     (celle qui contient déjà la table `comptes`). Si absente, l'app retombe sur `DATABASE_URL`.
+   - `SECRET_KEY` : une longue chaîne aléatoire, sert à signer les jetons de session.
+   - `BREVO_API_KEY` : clé API Brevo, pour l'envoi du lien « définir mon mot de passe ».
+   - `AUTH_ALLOWED_EMAILS` (optionnelle) : liste d'emails autorisés séparés par des virgules,
+     sinon une liste par défaut est utilisée dans `lib/authdb.js`.
+5. Redéploie (ou déploie simplement — Vercel le fait automatiquement après le premier push).
+
+Les tables sont créées automatiquement au premier appel à l'API — pas besoin d'exécuter
+`sql/schema.sql` toi-même, sauf si tu veux vérifier la structure à l'avance.
+
+## Notes
+
+- Le domicile est maintenant enregistré par salarié dans la base (au lieu d'un réglage
+  global), donc plusieurs salariés peuvent utiliser la même app sans se marcher dessus.
+- Le nom du dernier salarié saisi est mémorisé dans le navigateur (localStorage) pour
+  éviter de le retaper à chaque visite — c'est propre à cet appareil, pas partagé.
+- Export CSV et impression fonctionnent toujours entièrement côté navigateur, sans appel serveur.
+- La vue « direction » (dans `index.html` et `admin.html`) demande désormais un compte
+  individuel (email + mot de passe), avec un lien « mot de passe oublié / première
+  connexion » qui envoie un email via Brevo — comme les autres applis AID'Aux. La saisie des
+  trajets par les salariés (accueil) n'a pas de login, elle reste ouverte à tous.
+
+## Calcul des distances
+
+- Géocodage : Base Adresse Nationale via la Géoplateforme IGN (`data.geopf.fr/geocodage`),
+  gratuit et sans clé. Les adresses trop vagues (commune seule) ou incertaines sont refusées
+  avec un message clair au lieu de donner un faux kilométrage.
+- Itinéraire : service IGN `data.geopf.fr/navigation/itineraire` (réseau BD TOPO), sans clé.
+- Les champs d'adresse proposent des suggestions ; une adresse choisie dans la liste
+  (bordure turquoise) est calculée à partir de ses coordonnées exactes.
+- `ROUTE_OPTIMIZATION` (optionnelle) : `fastest` par défaut (itinéraire conseillé, comme
+  Google Maps / Mappy) ou `shortest` (plus court en km).
+- `GOOGLE_MAPS_API_KEY` (optionnelle) : si elle est présente, les km sont calculés par
+  Google (Routes API, sans trafic) pour correspondre à Google Maps ; l'IGN prend le relais
+  si Google ne répond pas. Les adresses restent validées par la Base Adresse Nationale.
+- `ORS_API_KEY` n'est plus obligatoire : si elle est présente, OpenRouteService sert de
+  secours quand le service IGN ne répond pas.
+
+## Km pour le compte d'un bénéficiaire
+
+- Dans la vue salarié, le bouton « 🤝 Pour un bénéficiaire » ouvre un second mode, séparé des
+  trajets domicile / 1er-dernier lieu (ces km ne comptent pas dans le forfait journalier).
+- Une feuille = un salarié + un mois + un bénéficiaire. Le nom du bénéficiaire est proposé
+  en autocomplétion et l'orthographe déjà utilisée dans le mois est reprise automatiquement.
+- En fin de mois, « ✍️ Faire signer » : le bénéficiaire (ou son représentant) signe au doigt
+  sur l'écran. La signature, le nom du signataire, la date et le total de km attesté sont
+  enregistrés, et la feuille est verrouillée (plus d'ajout ni de suppression).
+- « ⬇️ Télécharger en PDF » génère (dans le navigateur, avec jsPDF) la feuille papier « Kilomètres effectués pour le compte
+  d'un bénéficiaire » avec la signature.
+- Vue direction : tableau de toutes les feuilles du mois (signées ou non), PDF de
+  chaque feuille, export CSV, et bouton 🔓 pour retirer une signature si une correction est
+  nécessaire (la feuille devra alors être re-signée).
+- Tarifs (constantes `TAUX_FACTURATION` et `TAUX_REMBOURSEMENT` en haut du script d'`index.html`) :
+  1 € par km facturé au bénéficiaire, 0,40 € par km remboursé au salarié.
+- Vue direction : colonnes « Km bénéf. », « Remb. bénéf. » et « Total à rembourser » (forfait +
+  km bénéficiaires) par salarié. Seules les feuilles signées entrent dans le total à rembourser ;
+  les montants non signés sont affichés à part.
+- Tables : `frais_km_benef_trajets` et `frais_km_benef_signatures`, créées automatiquement.
