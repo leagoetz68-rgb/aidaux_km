@@ -1385,7 +1385,7 @@ window.KmBenef = (function(){
     els.summary.style.display = sheets.length ? 'flex' : 'none';
     els.summary.innerHTML = `
       <div>Total du mois<br><strong>${H.fmtKm(kmMois)}</strong></div>
-      <div style="text-align:right;">Remboursement (${B.fmtEuro(B.TAUX_REMBOURSEMENT)}/km)<br>
+      <div style="text-align:right;">Votre remboursement (${B.fmtEuro(B.TAUX_REMBOURSEMENT)}/km)<br>
         <strong class="coral">${B.fmtEuro(B.montant(kmMois, B.TAUX_REMBOURSEMENT))}</strong>
         ${kmSignes < kmMois ? `<br><small>dont ${B.fmtEuro(B.montant(kmSignes, B.TAUX_REMBOURSEMENT))} sur feuilles signées</small>` : ''}
       </div>`;
@@ -1408,7 +1408,7 @@ window.KmBenef = (function(){
       return `
         <div class="sheet${signed ? ' signed' : ''}">
           <div class="sheet-head">
-            <div><span class="sheet-name">${esc(sh.beneficiaire)}</span><span class="sheet-km">${H.fmtKm(total)}</span><span class="sheet-remb">· ${window.KmBenef.fmtEuro(window.KmBenef.montant(total, window.KmBenef.TAUX_REMBOURSEMENT))}</span></div>
+            <div><span class="sheet-name">${esc(sh.beneficiaire)}</span><span class="sheet-km">${H.fmtKm(total)}</span><span class="sheet-remb">· remboursé ${window.KmBenef.fmtEuro(window.KmBenef.montant(total, window.KmBenef.TAUX_REMBOURSEMENT))}</span></div>
             <span class="badge ${signed ? 'ok' : 'todo'}">${signed ? '✔ Signée' : 'À faire signer'}</span>
           </div>
           <div class="table-wrap">
