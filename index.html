@@ -1372,7 +1372,8 @@ window.KmBenef = (function(){
       const dejaSaisis = new Set(entries.map(e => e.date));
       propositionsXimi = (data.trajets || []).map((t, i) => ({ ...t, i, deja: dejaSaisis.has(t.date) }));
       if(!propositionsXimi.length){
-        box.innerHTML = `<div class="ximi-warn">Aucune intervention trouvée dans Ximi pour ${escapeHtml(data.intervenant || salarie)} ce mois-ci.</div>`;
+        const av = (data.avertissements || []).length ? '<br>⚠ ' + data.avertissements.map(escapeHtml).join('<br>⚠ ') : '';
+        box.innerHTML = `<div class="ximi-warn">Aucune intervention trouvée dans Ximi pour ${escapeHtml(data.intervenant || salarie)} ce mois-ci.${av}</div>`;
         return;
       }
       const nbJours = new Set(propositionsXimi.map(t => t.date)).size;
