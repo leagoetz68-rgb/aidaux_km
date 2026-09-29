@@ -309,8 +309,70 @@
   #view-direction .btn-login:hover{ background: var(--navy); }
   #view-direction .table-wrap{ overflow-x:auto; }
 
+  /* ===== Km pour le compte d'un bénéficiaire ===== */
+  .mode-switch{
+    display:flex; gap:4px; background: var(--surface); border-radius: 999px; padding:4px;
+    box-shadow: var(--shadow); margin: 16px 16px 0;
+  }
+  .mode-btn{
+    flex:1; font-family: var(--font-body); font-weight:600; font-size:13px;
+    color: var(--ink-soft); background: transparent; border:none; cursor:pointer;
+    padding: 9px 10px; border-radius: 999px;
+  }
+  .mode-btn.active{ background: var(--teal); color:white; }
+  .benef-intro{ font-size:12.5px; color: var(--ink-soft); margin: 0 0 12px; line-height:1.45; }
+  .benef-locked{
+    background: var(--coral-wash); color:#8a3220; border-radius:10px; padding:9px 12px;
+    font-size:12.5px; margin-top:10px; display:none;
+  }
+  .benef-summary{
+    display:flex; justify-content:space-between; gap:10px; flex-wrap:wrap; align-items:center;
+    background: var(--navy-wash); border-radius:10px; padding:10px 12px; margin-top:10px; font-size:12.5px; color: var(--ink-soft);
+  }
+  .benef-summary strong{ font-family: var(--font-mono); color: var(--navy); font-size:15px; }
+  .benef-summary .coral{ color: var(--coral); }
+  .sheet-remb{ font-size:12px; color: var(--ink-soft); margin-left:6px; }
+  .sheet{ border:1.5px solid var(--line); border-radius:12px; padding:12px; margin-top:12px; background:#FCFDFF; }
+  .sheet.signed{ border-color: var(--teal); background: #F6FCFC; }
+  .sheet-head{ display:flex; align-items:center; justify-content:space-between; gap:8px; flex-wrap:wrap; margin-bottom:8px; }
+  .sheet-name{ font-family: var(--font-display); font-weight:700; color: var(--navy); font-size:15px; }
+  .sheet-km{ font-family: var(--font-mono); font-weight:600; color: var(--teal); font-size:13px; margin-left:6px; }
+  .badge{ font-size:11px; font-weight:600; padding:4px 9px; border-radius:20px; white-space:nowrap; }
+  .badge.todo{ background: var(--coral-wash); color: var(--coral); }
+  .badge.ok{ background: var(--teal-wash); color: #0B7F7F; }
+  .sheet .trip-table{ min-width: 0; }
+  .sheet .trip-table td, .sheet .trip-table th{ padding: 7px 6px; }
+  .sheet-actions{ display:flex; gap:8px; margin-top:10px; flex-wrap:wrap; }
+  .sheet-actions .btn{ flex:1; min-width:140px; }
+  .btn-sign{ background: var(--navy); color:white; }
+  .btn-sign:hover{ background: var(--navy-bright); }
+  .sig-info{ display:flex; align-items:center; gap:12px; margin-top:10px; font-size:12.5px; color: var(--ink-soft); flex-wrap:wrap; }
+  .sig-info img{ height:54px; background:white; border:1px solid var(--line); border-radius:8px; padding:2px 6px; }
+
+  .modal-backdrop{
+    position:fixed; inset:0; background: rgba(24,36,73,0.55); z-index:100;
+    display:none; align-items:center; justify-content:center; padding:14px;
+  }
+  .modal-backdrop.open{ display:flex; }
+  .modal{
+    background: var(--surface); border-radius: var(--radius); width:100%; max-width:560px;
+    max-height: 94vh; overflow-y:auto; padding:18px; box-shadow: var(--shadow);
+  }
+  .modal h2{ font-family: var(--font-display); color: var(--navy); font-size:17px; margin:0 0 6px; }
+  .attest{ font-size:13px; color: var(--ink); background: var(--navy-wash); border-radius:10px; padding:10px 12px; margin:10px 0; line-height:1.5; }
+  .sig-pad-wrap{ position:relative; border:2px dashed var(--line); border-radius:12px; background:white; margin-top:6px; }
+  #sig-pad{ display:block; width:100%; height:200px; touch-action:none; cursor:crosshair; border-radius:10px; }
+  .sig-placeholder{ position:absolute; inset:0; display:flex; align-items:center; justify-content:center; color:#B5BCD6; font-size:13px; pointer-events:none; }
+  .modal-actions{ display:flex; gap:8px; margin-top:14px; }
+  .modal-actions .btn{ flex:1; }
+
+  #view-direction .benef-status-ok{ color:#0B7F7F; font-weight:600; }
+  #view-direction .benef-status-todo{ color: var(--coral); font-weight:600; }
+  #view-direction .row-actions{ white-space:nowrap; }
+  #view-direction .row-actions .tab-btn{ margin-right:4px; }
+
   @media print{
-    .hero, .view-tabs, .toolbar, .swap-btn, .leg-del, .no-print, .btn-primary, .checkbox-row, .total-bar{ display:none !important; }
+    .hero, .view-tabs, .mode-switch, .toolbar, .swap-btn, .leg-del, .no-print, .btn-primary, .checkbox-row, .total-bar{ display:none !important; }
     .card{ box-shadow:none; margin: 0 0 12px; border:1px solid #ccc; }
     body{ background:white; }
     tr.total-row td{ background:#eee !important; color:#000 !important; }
@@ -361,6 +423,12 @@
       </div>
     </div>
 
+    <div class="mode-switch no-print" role="tablist">
+      <button class="mode-btn active" id="mode-btn-perso" type="button">🚗 Mes trajets</button>
+      <button class="mode-btn" id="mode-btn-benef" type="button">🤝 Pour un bénéficiaire</button>
+    </div>
+
+    <div id="mode-perso">
     <div class="card">
       <div class="section-label"><span class="dot"></span>Ajouter un trajet</div>
       <div class="field-row">
@@ -476,6 +544,64 @@
         <button class="btn btn-danger-ghost btn-sm" id="btn-reset">Effacer le mois</button>
       </div>
     </div>
+    </div><!-- /mode-perso -->
+
+    <!-- ===== Km pour le compte d'un bénéficiaire ===== -->
+    <div id="mode-benef" style="display:none;">
+      <div class="card">
+        <div class="section-label"><span class="dot"></span>Trajet pour le compte d'un bénéficiaire</div>
+        <p class="benef-intro">Courses, rendez-vous, sorties… effectués avec ou pour un bénéficiaire. Une feuille par bénéficiaire et par mois : il la signe en fin de mois pour attester les kilomètres.</p>
+        <div class="field-row">
+          <div class="field">
+            <label for="b-benef">Nom du bénéficiaire</label>
+            <input type="text" id="b-benef" list="b-benef-list" placeholder="ex. Mme Muller">
+            <datalist id="b-benef-list"></datalist>
+          </div>
+          <div class="field" style="max-width:170px;">
+            <label for="b-date">Date</label>
+            <input type="date" id="b-date">
+          </div>
+        </div>
+        <div class="leg-block">
+          <div class="field-row" style="align-items:flex-end;">
+            <div class="field">
+              <label for="b-depart">Adresse de départ</label>
+              <input type="text" id="b-depart" placeholder="Adresse de départ">
+            </div>
+            <button class="swap-btn" id="b-swap" type="button" title="Inverser départ / arrivée">⇅</button>
+            <div class="field">
+              <label for="b-arrivee">Adresse d'arrivée</label>
+              <input type="text" id="b-arrivee" placeholder="Adresse d'arrivée">
+            </div>
+          </div>
+          <div class="field-row" style="margin-top:10px; align-items:flex-end;">
+            <div class="field" style="max-width:150px;">
+              <label for="b-km">Nombre de km</label>
+              <input type="number" id="b-km" step="0.1" min="0" placeholder="ex. 4,2">
+              <span class="calc-status" id="b-calc-status"></span>
+            </div>
+            <button class="tab-btn" id="b-calc" type="button">📍 Calculer</button>
+          </div>
+        </div>
+        <label class="checkbox-row">
+          <input type="checkbox" id="b-retour">
+          Aller-retour (ajoute aussi le trajet inverse)
+        </label>
+        <div class="benef-locked" id="b-locked">🔒 La feuille de ce bénéficiaire est déjà signée pour ce mois : on ne peut plus y ajouter de trajet.</div>
+        <button class="btn btn-primary" id="b-add">+ Ajouter le trajet</button>
+      </div>
+
+      <div class="card">
+        <div class="section-label"><span class="dot"></span>Feuilles du mois</div>
+        <div class="benef-summary" id="b-summary" style="display:none;"></div>
+        <div id="b-loading" class="loading-row" style="display:none;">Chargement…</div>
+        <div id="b-empty" class="empty-state">
+          <div class="icon">🤝</div>
+          Aucun trajet pour le compte d'un bénéficiaire ce mois-ci.
+        </div>
+        <div id="b-sheets"></div>
+      </div>
+    </div><!-- /mode-benef -->
 
   </div><!-- /view-salarie -->
 
@@ -530,6 +656,15 @@
       </div>
     </div>
 
+    <div class="card" id="dir-benef-view" style="display:none;">
+      <div class="section-label" style="margin-bottom:12px;"><span class="dot"></span>Km pour le compte des bénéficiaires</div>
+      <div id="dir-benef-wrap" class="table-wrap"></div>
+      <div id="dir-benef-empty" class="empty-dir" style="display:none;">Aucune feuille bénéficiaire pour ce mois.</div>
+      <div class="toolbar no-print">
+        <button class="btn btn-ghost btn-sm" id="dir-benef-csv">⬇️ Exporter CSV</button>
+      </div>
+    </div>
+
   </div><!-- /view-direction -->
 
 </div>
@@ -545,9 +680,157 @@
   </div>
 </div>
 
+<div class="modal-backdrop" id="sig-modal">
+  <div class="modal" role="dialog" aria-modal="true" aria-labelledby="sig-title">
+    <h2 id="sig-title">Signature du bénéficiaire</h2>
+    <div class="attest" id="sig-attest"></div>
+    <div class="field-row">
+      <div class="field">
+        <label for="sig-name">Nom du signataire (bénéficiaire ou son représentant)</label>
+        <input type="text" id="sig-name">
+      </div>
+    </div>
+    <label style="display:block; margin-top:12px;">Signature</label>
+    <div class="sig-pad-wrap">
+      <canvas id="sig-pad"></canvas>
+      <div class="sig-placeholder" id="sig-placeholder">Signez ici avec le doigt</div>
+    </div>
+    <div style="text-align:right; margin-top:6px;">
+      <button class="tab-btn" id="sig-clear" type="button">Effacer la signature</button>
+    </div>
+    <div class="modal-actions">
+      <button class="btn btn-ghost" id="sig-cancel" type="button">Annuler</button>
+      <button class="btn btn-sign" id="sig-ok" type="button">✍️ Valider la signature</button>
+    </div>
+  </div>
+</div>
+
 <div class="toast" id="toast"></div>
 
 <script>
+/* ======================= PARTAGÉ : feuille bénéficiaire ======================= */
+// Reproduit la feuille papier « Kilomètres effectués pour le compte d'un bénéficiaire »,
+// avec la signature, et l'imprime (ou l'enregistre en PDF) dans une nouvelle fenêtre.
+window.KmBenef = (function(){
+  // Tarifs des km effectués pour le compte d'un bénéficiaire
+  const TAUX_FACTURATION = 1;      // € par km facturé au client (bénéficiaire)
+  const TAUX_REMBOURSEMENT = 0.40; // € par km remboursé au salarié
+  function montant(km, taux){ return Math.round(Number(km || 0) * taux * 100) / 100; }
+  function fmtEuro(n){ return (Math.round(n * 100) / 100).toFixed(2).replace('.', ',') + ' €'; }
+  function esc(str){ const d = document.createElement('div'); d.textContent = str == null ? '' : String(str); return d.innerHTML; }
+  function fmtKmNum(n){ return (Math.round(Number(n||0)*10)/10).toString().replace('.', ','); }
+  function moisLabel(mois){
+    const [y, m] = String(mois || '').split('-').map(Number);
+    if(!y || !m) return mois || '';
+    const s = new Date(y, m - 1, 1).toLocaleDateString('fr-FR', { month:'long', year:'numeric' });
+    return s.charAt(0).toUpperCase() + s.slice(1);
+  }
+  function dateFr(iso){ return new Date(iso + 'T00:00:00').toLocaleDateString('fr-FR'); }
+  function totalKm(trajets){ return trajets.reduce((s, t) => s + Number(t.km || 0), 0); }
+
+  // sheet = { salarie, mois, beneficiaire, trajets: [...], signature: {signataire, signature, signe_le} | null }
+  function print(sheet){
+    const trajets = sheet.trajets.slice().sort((a, b) => a.date.localeCompare(b.date));
+    const total = totalKm(trajets);
+    let rows = trajets.map(t => `<tr>
+        <td>${esc(dateFr(t.date))}</td><td>${esc(sheet.beneficiaire)}</td>
+        <td>${esc(t.depart)}</td><td>${esc(t.arrivee)}</td><td class="num">${fmtKmNum(t.km)}</td></tr>`).join('');
+    for(let i = trajets.length; i < 8; i++) rows += '<tr><td></td><td></td><td></td><td></td><td></td></tr>';
+
+    const sig = sheet.signature;
+    const sigBlock = sig
+      ? `<div class="sig">
+           <p>Je soussigné(e) <strong>${esc(sig.signataire)}</strong> atteste que <strong>${esc(sheet.salarie)}</strong>
+           a effectué pour le compte de <strong>${esc(sheet.beneficiaire)}</strong> les trajets ci-dessus, soit
+           <strong>${fmtKmNum(total)} km</strong> au cours du mois de ${esc(moisLabel(sheet.mois).toLowerCase())}.</p>
+           <p class="small">Signé électroniquement le ${esc(new Date(sig.signe_le).toLocaleString('fr-FR', { dateStyle:'short', timeStyle:'short' }))}</p>
+           <img src="${sig.signature}" alt="Signature">
+         </div>`
+      : `<div class="sig"><p>Signature du bénéficiaire :</p><div class="sig-empty"></div></div>`;
+
+    const html = `<!DOCTYPE html><html lang="fr"><head><meta charset="UTF-8">
+<title>Km bénéficiaire — ${esc(sheet.beneficiaire)} — ${esc(sheet.mois)}</title>
+<style>
+  @page{ size: A4 landscape; margin: 12mm; }
+  body{ font-family: Arial, Helvetica, sans-serif; color:#000; font-size:12px; margin:0; }
+  h1{ text-align:center; font-size:19px; text-decoration:underline; margin:0 0 14px; }
+  .top{ display:flex; justify-content:space-between; align-items:flex-end; gap:20px; margin-bottom:10px; }
+  .meta p{ margin:4px 0; font-size:13px; } .meta u{ margin-right:6px; }
+  .dir{ border:1px solid #000; width:260px; }
+  .dir .h{ text-align:center; padding:5px; background:#eee; border-bottom:1px solid #000; }
+  .dir .b{ display:flex; } .dir .b div{ padding:6px; }
+  .dir .b div:first-child{ border-right:1px solid #000; font-weight:bold; font-size:10px; width:120px; text-align:center; }
+  .dir .b div:last-child{ flex:1; text-align:center; font-weight:bold; font-size:14px; }
+  table{ width:100%; border-collapse:collapse; }
+  th, td{ border:1px solid #000; padding:6px; height:24px; text-align:left; }
+  th{ font-weight:normal; text-decoration:underline; }
+  td.num{ text-align:right; }
+  tfoot td{ font-weight:bold; }
+  .sig{ margin-top:14px; page-break-inside:avoid; }
+  .sig p{ margin:3px 0; font-size:12.5px; } .sig .small{ font-size:10.5px; color:#444; }
+  .sig img{ max-height:90px; margin-top:4px; }
+  .sig-empty{ border:1px solid #000; width:260px; height:80px; margin-top:4px; }
+</style></head><body>
+  <h1>Kilomètres effectués pour le compte d'un bénéficiaire</h1>
+  <div class="top">
+    <div class="meta">
+      <p><u>MOIS CONCERNÉ:</u> ${esc(moisLabel(sheet.mois))}</p>
+      <p><u>NOM DU SALARIÉ:</u> ${esc(sheet.salarie)}</p>
+    </div>
+    <div class="dir">
+      <div class="h">Réservé à la direction</div>
+      <div class="b"><div>TOTAL KILOMÈTRES DU MOIS:</div><div>${fmtKmNum(total)} km</div></div>
+    </div>
+  </div>
+  <table>
+    <thead><tr><th style="width:12%">Date</th><th style="width:20%">Nom du bénéficiaire</th>
+      <th>Adresse de départ</th><th>Adresse d'arrivée</th><th style="width:13%">Nombre de kilomètres</th></tr></thead>
+    <tbody>${rows}</tbody>
+    <tfoot><tr><td colspan="4" style="text-align:right;">Total</td><td class="num">${fmtKmNum(total)}</td></tr></tfoot>
+  </table>
+  ${sigBlock}
+  <script>window.onload = function(){ setTimeout(function(){ window.print(); }, 200); };<\/script>
+</body></html>`;
+
+    const w = window.open('', '_blank');
+    if(!w){ alert("Impossible d'ouvrir la feuille : autorisez les fenêtres pop-up pour ce site."); return; }
+    w.document.open(); w.document.write(html); w.document.close();
+  }
+
+  // Regroupe les trajets par (salarié, bénéficiaire) et y rattache la signature
+  function groupSheets(data, mois){
+    const map = new Map();
+    (data.trajets || []).forEach(t => {
+      const key = t.salarie + '\u0000' + t.beneficiaire;
+      if(!map.has(key)) map.set(key, { salarie: t.salarie, beneficiaire: t.beneficiaire, mois, trajets: [], signature: null });
+      map.get(key).trajets.push(t);
+    });
+    (data.signatures || []).forEach(sg => {
+      const key = sg.salarie + '\u0000' + sg.beneficiaire;
+      if(!map.has(key)) map.set(key, { salarie: sg.salarie, beneficiaire: sg.beneficiaire, mois, trajets: [], signature: null });
+      map.get(key).signature = sg;
+    });
+    return [...map.values()].sort((a, b) =>
+      a.salarie.localeCompare(b.salarie, 'fr') || a.beneficiaire.localeCompare(b.beneficiaire, 'fr'));
+  }
+
+  // Montants par salarié : remboursement des feuilles signées / en attente de signature
+  function remboursementsParSalarie(sheets){
+    const out = {};
+    sheets.forEach(sh => {
+      const o = out[sh.salarie] || (out[sh.salarie] = { km: 0, signe: 0, attente: 0 });
+      const km = totalKm(sh.trajets);
+      o.km += km;
+      if(sh.signature) o.signe += montant(km, TAUX_REMBOURSEMENT);
+      else o.attente += montant(km, TAUX_REMBOURSEMENT);
+    });
+    return out;
+  }
+
+  return { print, groupSheets, totalKm, moisLabel, fmtKmNum, fmtEuro, montant, remboursementsParSalarie,
+           TAUX_FACTURATION, TAUX_REMBOURSEMENT };
+})();
+
 /* ======================= VUE SALARIÉ ======================= */
 (function(){
   const $ = (id) => document.getElementById(id);
@@ -985,6 +1268,9 @@
   });
   els.mois.addEventListener('change', loadEntries);
 
+  // Outils partagés avec le mode « Pour un bénéficiaire »
+  window.KmHelpers = { attachAutocomplete, autoCalcKm, setAddr, copyAddr, escapeHtml, fmtKm, showToast, todayMonth, todayISO };
+
   (async function init(){
     const origin = (window.location.origin && window.location.origin !== 'null')
       ? window.location.origin
@@ -1001,6 +1287,325 @@
   })();
 })();
 
+/* ======================= KM POUR LE COMPTE D'UN BÉNÉFICIAIRE (salarié) ======================= */
+(function(){
+  const $ = (id) => document.getElementById(id);
+  const H = window.KmHelpers;
+  const els = {
+    salarie: $('salarie'), mois: $('mois'),
+    modePerso: $('mode-perso'), modeBenef: $('mode-benef'),
+    btnPerso: $('mode-btn-perso'), btnBenef: $('mode-btn-benef'), totalBar: $('total-bar'),
+    benef: $('b-benef'), benefList: $('b-benef-list'), date: $('b-date'),
+    depart: $('b-depart'), arrivee: $('b-arrivee'), km: $('b-km'), status: $('b-calc-status'),
+    btnCalc: $('b-calc'), btnSwap: $('b-swap'), retour: $('b-retour'), locked: $('b-locked'), btnAdd: $('b-add'),
+    loading: $('b-loading'), empty: $('b-empty'), sheetsWrap: $('b-sheets'), summary: $('b-summary'),
+    modal: $('sig-modal'), attest: $('sig-attest'), sigName: $('sig-name'), pad: $('sig-pad'),
+    placeholder: $('sig-placeholder'), btnClear: $('sig-clear'), btnCancel: $('sig-cancel'), btnOk: $('sig-ok'),
+  };
+  const RECENT_KEY = 'fraisKm:recentBeneficiaires';
+  let sheets = [];
+  let loaded = false;
+
+  const esc = H.escapeHtml;
+  const salarie = () => (els.salarie.value || '').replace(/\s+/g, ' ').trim();
+  const mois = () => els.mois.value || H.todayMonth();
+  const benefName = () => (els.benef.value || '').replace(/\s+/g, ' ').trim();
+
+  // ---------- Bascule Mes trajets / Pour un bénéficiaire ----------
+  window.KmMode = 'perso';
+  function setMode(mode){
+    window.KmMode = mode;
+    const benef = mode === 'benef';
+    els.btnPerso.classList.toggle('active', !benef);
+    els.btnBenef.classList.toggle('active', benef);
+    els.modePerso.style.display = benef ? 'none' : '';
+    els.modeBenef.style.display = benef ? '' : 'none';
+    if(els.totalBar) els.totalBar.style.display = benef ? 'none' : '';
+    if(benef && !loaded) load();
+  }
+  els.btnPerso.addEventListener('click', () => setMode('perso'));
+  els.btnBenef.addEventListener('click', () => setMode('benef'));
+
+  // ---------- Bénéficiaires récents (sur cet appareil) ----------
+  function recentList(){
+    try{ return JSON.parse(localStorage.getItem(RECENT_KEY) || '[]'); }catch(e){ return []; }
+  }
+  function rememberBenef(name){
+    const list = [name, ...recentList().filter(n => n.toLowerCase() !== name.toLowerCase())].slice(0, 30);
+    try{ localStorage.setItem(RECENT_KEY, JSON.stringify(list)); }catch(e){}
+  }
+  function refreshDatalist(){
+    const names = new Map();
+    sheets.forEach(s => names.set(s.beneficiaire.toLowerCase(), s.beneficiaire));
+    recentList().forEach(n => { if(!names.has(n.toLowerCase())) names.set(n.toLowerCase(), n); });
+    els.benefList.innerHTML = [...names.values()].map(n => `<option value="${esc(n)}">`).join('');
+  }
+
+  // Réutilise l'orthographe déjà enregistrée ce mois-ci (évite deux feuilles "Mme Muller" / "mme muller")
+  function canonicalBenef(name){
+    const hit = sheets.find(s => s.beneficiaire.toLowerCase() === name.toLowerCase());
+    return hit ? hit.beneficiaire : name;
+  }
+  function sheetFor(name){
+    return sheets.find(s => s.beneficiaire.toLowerCase() === name.toLowerCase());
+  }
+  function updateLockState(){
+    const sh = benefName() ? sheetFor(benefName()) : null;
+    const locked = !!(sh && sh.signature);
+    els.locked.style.display = locked ? 'block' : 'none';
+    els.btnAdd.disabled = locked;
+  }
+
+  // ---------- Chargement / affichage ----------
+  async function load(){
+    const s = salarie();
+    loaded = true;
+    if(!s){ sheets = []; render(); return; }
+    els.loading.style.display = 'block';
+    try{
+      const res = await fetch('/api/beneficiaires?salarie=' + encodeURIComponent(s) + '&mois=' + encodeURIComponent(mois()));
+      const data = await res.json();
+      if(!res.ok) throw new Error(data.error || 'Erreur serveur');
+      sheets = window.KmBenef.groupSheets(data, mois());
+    }catch(e){
+      sheets = [];
+      H.showToast('Impossible de charger les feuilles bénéficiaires');
+    }
+    els.loading.style.display = 'none';
+    render();
+  }
+
+  function render(){
+    refreshDatalist();
+    updateLockState();
+    els.empty.style.display = sheets.length ? 'none' : 'block';
+    const B = window.KmBenef;
+    const kmMois = sheets.reduce((s, sh) => s + B.totalKm(sh.trajets), 0);
+    const kmSignes = sheets.filter(sh => sh.signature).reduce((s, sh) => s + B.totalKm(sh.trajets), 0);
+    els.summary.style.display = sheets.length ? 'flex' : 'none';
+    els.summary.innerHTML = `
+      <div>Total du mois<br><strong>${H.fmtKm(kmMois)}</strong></div>
+      <div style="text-align:right;">Remboursement (${B.fmtEuro(B.TAUX_REMBOURSEMENT)}/km)<br>
+        <strong class="coral">${B.fmtEuro(B.montant(kmMois, B.TAUX_REMBOURSEMENT))}</strong>
+        ${kmSignes < kmMois ? `<br><small>dont ${B.fmtEuro(B.montant(kmSignes, B.TAUX_REMBOURSEMENT))} sur feuilles signées</small>` : ''}
+      </div>`;
+    els.sheetsWrap.innerHTML = sheets.map((sh, idx) => {
+      const total = window.KmBenef.totalKm(sh.trajets);
+      const signed = !!sh.signature;
+      const rows = sh.trajets.slice().sort((a, b) => a.date.localeCompare(b.date)).map(t => `
+        <tr>
+          <td class="cell-date">${new Date(t.date + 'T00:00:00').toLocaleDateString('fr-FR')}</td>
+          <td>${esc(t.depart)}</td><td>${esc(t.arrivee)}</td>
+          <td class="cell-km">${H.fmtKm(Number(t.km || 0))}</td>
+          ${signed ? '' : `<td class="cell-del no-print"><button class="leg-del" data-id="${esc(t.id)}" title="Supprimer">✕</button></td>`}
+        </tr>`).join('');
+      const sigInfo = signed ? `
+        <div class="sig-info">
+          <img src="${sh.signature.signature}" alt="Signature">
+          <span>Signée par <strong>${esc(sh.signature.signataire)}</strong><br>
+          le ${new Date(sh.signature.signe_le).toLocaleString('fr-FR', { dateStyle:'short', timeStyle:'short' })}</span>
+        </div>` : '';
+      return `
+        <div class="sheet${signed ? ' signed' : ''}">
+          <div class="sheet-head">
+            <div><span class="sheet-name">${esc(sh.beneficiaire)}</span><span class="sheet-km">${H.fmtKm(total)}</span><span class="sheet-remb">· ${window.KmBenef.fmtEuro(window.KmBenef.montant(total, window.KmBenef.TAUX_REMBOURSEMENT))}</span></div>
+            <span class="badge ${signed ? 'ok' : 'todo'}">${signed ? '✔ Signée' : 'À faire signer'}</span>
+          </div>
+          <div class="table-wrap">
+            <table class="trip-table">
+              <thead><tr><th>Date</th><th>Adresse de départ</th><th>Adresse d'arrivée</th><th>Km</th>${signed ? '' : '<th class="no-print"></th>'}</tr></thead>
+              <tbody>${rows}</tbody>
+              <tfoot><tr class="total-row"><td colspan="3">Total du mois</td><td class="cell-km">${H.fmtKm(total)}</td>${signed ? '' : '<td class="no-print"></td>'}</tr></tfoot>
+            </table>
+          </div>
+          ${sigInfo}
+          <div class="sheet-actions">
+            ${signed ? '' : `<button class="btn btn-sign btn-sm" data-sign="${idx}" ${sh.trajets.length ? '' : 'disabled'}>✍️ Faire signer</button>`}
+            <button class="btn btn-ghost btn-sm" data-print="${idx}">🖨️ Imprimer la feuille</button>
+          </div>
+        </div>`;
+    }).join('');
+
+    els.sheetsWrap.querySelectorAll('.leg-del').forEach(btn => btn.addEventListener('click', () => deleteTrip(btn.dataset.id)));
+    els.sheetsWrap.querySelectorAll('[data-sign]').forEach(btn => btn.addEventListener('click', () => openSign(sheets[Number(btn.dataset.sign)])));
+    els.sheetsWrap.querySelectorAll('[data-print]').forEach(btn => btn.addEventListener('click', () => {
+      window.KmBenef.print({ ...sheets[Number(btn.dataset.print)], salarie: salarie() });
+    }));
+  }
+
+  // ---------- Ajout / suppression ----------
+  async function addTrip(){
+    const s = salarie();
+    const name = canonicalBenef(benefName());
+    const date = els.date.value;
+    const depart = els.depart.value.trim(), arrivee = els.arrivee.value.trim();
+    const km = parseFloat((els.km.value || '').replace(',', '.'));
+    if(!s){ H.showToast('Merci de renseigner le nom du salarié'); return; }
+    if(!name){ H.showToast('Merci de renseigner le nom du bénéficiaire'); return; }
+    if(!date){ H.showToast('Merci de renseigner une date'); return; }
+    if(date.slice(0, 7) !== mois()){ H.showToast('La date doit être dans le mois concerné'); return; }
+    if(!depart || !arrivee){ H.showToast('Merci de renseigner les deux adresses'); return; }
+    if(isNaN(km) || km <= 0){ H.showToast('Merci de renseigner un nombre de km valide'); return; }
+
+    els.btnAdd.disabled = true;
+    try{
+      const res = await fetch('/api/beneficiaires', {
+        method: 'POST', headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ action: 'add', salarie: s, mois: mois(), beneficiaire: name, date, depart, arrivee, km, retour: els.retour.checked })
+      });
+      const data = await res.json().catch(() => ({}));
+      if(!res.ok) throw new Error(data.error || 'Erreur serveur');
+      rememberBenef(name);
+      els.benef.value = name;
+      H.setAddr(els.depart, ''); H.setAddr(els.arrivee, '');
+      els.km.value = ''; els.status.textContent = '';
+      await load();
+      H.showToast('Trajet ajouté ✓');
+    }catch(e){
+      H.showToast(e.message || "Échec de l'enregistrement");
+    }
+    updateLockState();
+  }
+
+  async function deleteTrip(id){
+    try{
+      const res = await fetch('/api/beneficiaires?id=' + encodeURIComponent(id), { method: 'DELETE' });
+      const data = await res.json().catch(() => ({}));
+      if(!res.ok) throw new Error(data.error || 'Erreur');
+    }catch(e){
+      H.showToast(e.message || 'Erreur lors de la suppression');
+    }
+    await load();
+  }
+
+  // ---------- Signature ----------
+  let current = null, hasInk = false, drawing = false, ctx = null;
+
+  function resizePad(){
+    const ratio = Math.max(window.devicePixelRatio || 1, 1);
+    const rect = els.pad.getBoundingClientRect();
+    els.pad.width = rect.width * ratio;
+    els.pad.height = rect.height * ratio;
+    ctx = els.pad.getContext('2d');
+    ctx.setTransform(ratio, 0, 0, ratio, 0, 0);
+    ctx.lineWidth = 2.4; ctx.lineCap = 'round'; ctx.lineJoin = 'round'; ctx.strokeStyle = '#182449';
+    clearPad();
+  }
+  function clearPad(){
+    if(ctx) ctx.clearRect(0, 0, els.pad.width, els.pad.height);
+    hasInk = false;
+    els.placeholder.style.display = 'flex';
+  }
+  function pos(e){
+    const r = els.pad.getBoundingClientRect();
+    return { x: e.clientX - r.left, y: e.clientY - r.top };
+  }
+  els.pad.addEventListener('pointerdown', (e) => {
+    e.preventDefault();
+    drawing = true;
+    els.pad.setPointerCapture(e.pointerId);
+    const p = pos(e);
+    ctx.beginPath(); ctx.moveTo(p.x, p.y); ctx.lineTo(p.x + 0.1, p.y + 0.1); ctx.stroke();
+    hasInk = true; els.placeholder.style.display = 'none';
+  });
+  els.pad.addEventListener('pointermove', (e) => {
+    if(!drawing) return;
+    const p = pos(e);
+    ctx.lineTo(p.x, p.y); ctx.stroke();
+  });
+  ['pointerup', 'pointercancel', 'pointerleave'].forEach(ev => els.pad.addEventListener(ev, () => { drawing = false; }));
+
+  function lastDayOfMonth(m){
+    const [y, mo] = m.split('-').map(Number);
+    return new Date(y, mo, 0);
+  }
+
+  function openSign(sheet){
+    if(!sheet || !sheet.trajets.length) return;
+    const today = new Date(); today.setHours(0, 0, 0, 0);
+    if(today < lastDayOfMonth(mois())){
+      if(!confirm("Le mois n'est pas encore terminé. Une fois signée, la feuille est verrouillée et plus aucun trajet ne pourra y être ajouté. Faire signer quand même ?")) return;
+    }
+    current = sheet;
+    const total = window.KmBenef.totalKm(sheet.trajets);
+    els.sigName.value = sheet.beneficiaire;
+    const updateAttest = () => {
+      els.attest.innerHTML = `Je soussigné(e) <strong>${esc(els.sigName.value.trim() || '…')}</strong> atteste que
+        <strong>${esc(salarie())}</strong> a effectué pour le compte de <strong>${esc(sheet.beneficiaire)}</strong>
+        les ${sheet.trajets.length} trajet(s) de la feuille, soit <strong>${H.fmtKm(total)}</strong>
+        au cours du mois de ${esc(window.KmBenef.moisLabel(mois()).toLowerCase())}.`;
+    };
+    els.sigName.oninput = updateAttest;
+    updateAttest();
+    els.modal.classList.add('open');
+    document.body.style.overflow = 'hidden';
+    requestAnimationFrame(resizePad);
+  }
+  function closeSign(){
+    els.modal.classList.remove('open');
+    document.body.style.overflow = '';
+    current = null;
+  }
+
+  async function submitSign(){
+    if(!current) return;
+    const signataire = els.sigName.value.trim();
+    if(!signataire){ H.showToast('Merci de renseigner le nom du signataire'); return; }
+    if(!hasInk){ H.showToast('Merci de signer dans le cadre'); return; }
+    els.btnOk.disabled = true;
+    try{
+      const res = await fetch('/api/beneficiaires', {
+        method: 'POST', headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          action: 'sign', salarie: salarie(), mois: mois(), beneficiaire: current.beneficiaire,
+          signataire, signature: els.pad.toDataURL('image/png')
+        })
+      });
+      const data = await res.json().catch(() => ({}));
+      if(!res.ok) throw new Error(data.error || 'Erreur serveur');
+      closeSign();
+      await load();
+      H.showToast('Feuille signée ✓');
+    }catch(e){
+      H.showToast(e.message || "Échec de l'enregistrement de la signature");
+    }
+    els.btnOk.disabled = false;
+  }
+
+  els.btnClear.addEventListener('click', clearPad);
+  els.btnCancel.addEventListener('click', closeSign);
+  els.btnOk.addEventListener('click', submitSign);
+  window.addEventListener('resize', () => { if(els.modal.classList.contains('open')) resizePad(); });
+
+  // ---------- Adresses + calcul des km (mêmes outils que "Mes trajets") ----------
+  [els.depart, els.arrivee].forEach(H.attachAutocomplete);
+  const calc = () => H.autoCalcKm(els.depart, els.arrivee, els.km, els.status);
+  els.depart.addEventListener('change', calc);
+  els.arrivee.addEventListener('change', calc);
+  els.btnCalc.addEventListener('click', calc);
+  els.btnSwap.addEventListener('click', () => {
+    const tmp = { value: els.depart.value, dataset: { ...els.depart.dataset } };
+    H.copyAddr(els.arrivee, els.depart);
+    H.copyAddr(tmp, els.arrivee);
+    calc();
+  });
+  els.btnAdd.addEventListener('click', addTrip);
+  els.benef.addEventListener('input', updateLockState);
+  els.benef.addEventListener('change', () => { els.benef.value = canonicalBenef(benefName()); updateLockState(); });
+
+  // Rechargement quand le salarié ou le mois change
+  els.salarie.addEventListener('change', () => { if(window.KmMode === 'benef') load(); else loaded = false; });
+  els.mois.addEventListener('change', () => {
+    const m = mois();
+    if(!els.date.value || els.date.value.slice(0, 7) !== m){
+      els.date.value = (H.todayISO().slice(0, 7) === m) ? H.todayISO() : m + '-01';
+    }
+    if(window.KmMode === 'benef') load(); else loaded = false;
+  });
+
+  if(!els.date.value) els.date.value = H.todayISO();
+})();
+
 /* ======================= VUE DIRECTION ======================= */
 (function(){
   const $ = (id) => document.getElementById(id);
@@ -1009,7 +1614,10 @@
     email: $('dir-email'), password: $('dir-password'), btnLogin: $('dir-btn-login'), loginError: $('dir-login-error'),
     mois: $('dir-mois'), dashError: $('dir-dash-error'), tableWrap: $('dir-table-wrap'), empty: $('dir-empty'),
     btnPrint: $('dir-btn-print'), btnCsv: $('dir-btn-csv'), toast: $('toast'),
+    benefView: $('dir-benef-view'), benefWrap: $('dir-benef-wrap'), benefEmpty: $('dir-benef-empty'), benefCsv: $('dir-benef-csv'),
   };
+  let benefSheets = [];
+  let benefParSalarie = {};
 
   let currentToken = '';
   let pollTimer = null;
@@ -1045,6 +1653,7 @@
         currentToken = '';
         sessionStorage.removeItem(SESSION_KEY);
         els.dashboardView.style.display = 'none';
+        els.benefView.style.display = 'none';
         els.loginView.style.display = 'block';
         els.loginError.style.display = 'block';
         els.loginError.textContent = 'Session expirée, merci de vous reconnecter.';
@@ -1062,41 +1671,65 @@
       if(expandedSalarie){
         loadDetail(expandedSalarie);
       }
+      loadBenef();
     }catch(e){
       els.dashError.style.display = 'block';
       els.dashError.textContent = 'Connexion impossible, nouvelle tentative dans 10s...';
     }
   }
 
+  // Liste par salarié = trajets domicile (forfait) + km bénéficiaires (0,40 €/km, feuilles signées)
+  function mergedList(list){
+    const map = new Map(list.map(item => [item.salarie, { ...item }]));
+    Object.keys(benefParSalarie).forEach(sal => {
+      if(!map.has(sal)) map.set(sal, { salarie: sal, jours: 0, km: 0, forfait: 0 });
+    });
+    return [...map.values()].map(item => {
+      const b = benefParSalarie[item.salarie] || { km: 0, signe: 0, attente: 0 };
+      return { ...item, benefKm: b.km, benefSigne: b.signe, benefAttente: b.attente,
+               totalRemb: Math.round((item.forfait + b.signe) * 100) / 100 };
+    }).sort((a, b) => a.salarie.localeCompare(b.salarie, 'fr'));
+  }
+
   function render(list){
-    if(list.length === 0){
+    const merged = mergedList(list);
+    if(merged.length === 0){
       els.tableWrap.innerHTML = '';
       els.empty.style.display = 'block';
       return;
     }
     els.empty.style.display = 'none';
-    let totalKm = 0, totalForfait = 0;
-    const rows = list.map(item => {
+    let totalKm = 0, totalForfait = 0, totalBenefKm = 0, totalBenef = 0, totalAttente = 0, totalRemb = 0;
+    const rows = merged.map(item => {
       totalKm += item.km;
       totalForfait += item.forfait;
+      totalBenefKm += item.benefKm; totalBenef += item.benefSigne; totalAttente += item.benefAttente;
+      totalRemb += item.totalRemb;
       const isOpen = expandedSalarie === item.salarie;
+      const attente = item.benefAttente > 0 ? `<br><small style="color:var(--ink-soft);">+ ${fmtEuro(item.benefAttente)} non signés</small>` : '';
       let html = `<tr class="salarie-row${isOpen ? ' open' : ''}" data-salarie="${escapeHtml(item.salarie)}">
         <td><span class="chevron">▶</span> ${escapeHtml(item.salarie)}</td>
         <td class="num">${item.jours}</td>
         <td class="num km">${fmtKm(item.km)}</td>
         <td class="num forfait">${fmtEuro(item.forfait)}</td>
+        <td class="num km">${fmtKm(item.benefKm)}</td>
+        <td class="num forfait">${fmtEuro(item.benefSigne)}${attente}</td>
+        <td class="num"><strong>${fmtEuro(item.totalRemb)}</strong></td>
       </tr>`;
       if(isOpen){
-        html += `<tr class="detail-row"><td colspan="4"><div class="detail-wrap" id="dir-detail-wrap"><div class="detail-loading">Chargement du détail...</div></div></td></tr>`;
+        html += `<tr class="detail-row"><td colspan="7"><div class="detail-wrap" id="dir-detail-wrap"><div class="detail-loading">Chargement du détail...</div></div></td></tr>`;
       }
       return html;
     }).join('');
     els.tableWrap.innerHTML = `
       <table class="dir-table">
-        <thead><tr><th>Salarié</th><th>Jours</th><th>Km</th><th>Forfait</th></tr></thead>
+        <thead><tr><th>Salarié</th><th>Jours</th><th>Km</th><th>Forfait</th><th>Km bénéf.</th><th>Remb. bénéf. (0,40 €/km)</th><th>Total à rembourser</th></tr></thead>
         <tbody>${rows}</tbody>
-        <tfoot><tr class="total"><td>Total</td><td></td><td class="num">${fmtKm(totalKm)}</td><td class="num">${fmtEuro(totalForfait)}</td></tr></tfoot>
+        <tfoot><tr class="total"><td>Total</td><td></td><td class="num">${fmtKm(totalKm)}</td><td class="num">${fmtEuro(totalForfait)}</td>
+          <td class="num">${fmtKm(totalBenefKm)}</td><td class="num">${fmtEuro(totalBenef)}${totalAttente > 0 ? `<br><small>+ ${fmtEuro(totalAttente)} non signés</small>` : ''}</td>
+          <td class="num">${fmtEuro(totalRemb)}</td></tr></tfoot>
       </table>
+      <p style="font-size:11.5px; color:var(--ink-soft); margin:8px 0 0;">Le remboursement des km bénéficiaires n'est compté dans le total qu'une fois la feuille signée par le bénéficiaire.</p>
     `;
     els.tableWrap.querySelectorAll('tr.salarie-row').forEach(tr => {
       tr.addEventListener('click', () => {
@@ -1155,6 +1788,108 @@
     `;
   }
 
+  // ---------- Km pour le compte des bénéficiaires ----------
+  async function loadBenef(){
+    const mois = els.mois.value || todayMonth();
+    try{
+      const res = await fetch('/api/beneficiaires?mois=' + encodeURIComponent(mois) + '&token=' + encodeURIComponent(currentToken));
+      const data = await res.json();
+      if(!res.ok) throw new Error(data.error || 'Erreur');
+      benefSheets = window.KmBenef.groupSheets(data, mois);
+      benefParSalarie = window.KmBenef.remboursementsParSalarie(benefSheets);
+      renderBenef();
+      render(lastList || []);
+      if(expandedSalarie) loadDetail(expandedSalarie);
+    }catch(e){
+      els.benefWrap.innerHTML = '<div class="detail-loading">Feuilles bénéficiaires indisponibles.</div>';
+    }
+  }
+
+  function renderBenef(){
+    els.benefView.style.display = 'block';
+    if(benefSheets.length === 0){
+      els.benefWrap.innerHTML = '';
+      els.benefEmpty.style.display = 'block';
+      return;
+    }
+    els.benefEmpty.style.display = 'none';
+    const B = window.KmBenef;
+    let totalKm = 0, nbSigned = 0;
+    const rows = benefSheets.map((sh, idx) => {
+      const km = B.totalKm(sh.trajets);
+      totalKm += km;
+      const sig = sh.signature;
+      if(sig) nbSigned++;
+      const status = sig
+        ? `<span class="benef-status-ok">✔ Signée</span><br><small>${escapeHtml(sig.signataire)} — ${new Date(sig.signe_le).toLocaleDateString('fr-FR')}</small>`
+        : '<span class="benef-status-todo">Non signée</span>';
+      return `<tr>
+        <td>${escapeHtml(sh.salarie)}</td>
+        <td>${escapeHtml(sh.beneficiaire)}</td>
+        <td class="num">${sh.trajets.length}</td>
+        <td class="num km">${fmtKm(km)}</td>
+        <td class="num">${B.fmtEuro(B.montant(km, B.TAUX_FACTURATION))}</td>
+        <td class="num forfait">${B.fmtEuro(B.montant(km, B.TAUX_REMBOURSEMENT))}</td>
+        <td>${status}</td>
+        <td class="row-actions">
+          <button class="tab-btn" data-bprint="${idx}" type="button">🖨️ Feuille</button>
+          ${sig ? `<button class="tab-btn" data-bunlock="${idx}" type="button" title="Retirer la signature pour permettre une correction">🔓</button>` : ''}
+        </td>
+      </tr>`;
+    }).join('');
+    els.benefWrap.innerHTML = `
+      <table class="dir-table">
+        <thead><tr><th>Salarié</th><th>Bénéficiaire</th><th>Trajets</th><th>Km</th><th>Facturé client (1 €/km)</th><th>Remb. salarié (0,40 €/km)</th><th>Signature</th><th></th></tr></thead>
+        <tbody>${rows}</tbody>
+        <tfoot><tr class="total"><td colspan="3">Total — ${nbSigned}/${benefSheets.length} feuille(s) signée(s)</td><td class="num">${fmtKm(totalKm)}</td>
+          <td class="num">${B.fmtEuro(B.montant(totalKm, B.TAUX_FACTURATION))}</td><td class="num">${B.fmtEuro(B.montant(totalKm, B.TAUX_REMBOURSEMENT))}</td><td colspan="2"></td></tr></tfoot>
+      </table>`;
+    els.benefWrap.querySelectorAll('[data-bprint]').forEach(b => b.addEventListener('click', () => {
+      window.KmBenef.print(benefSheets[Number(b.dataset.bprint)]);
+    }));
+    els.benefWrap.querySelectorAll('[data-bunlock]').forEach(b => b.addEventListener('click', () => unlockBenef(benefSheets[Number(b.dataset.bunlock)])));
+  }
+
+  async function unlockBenef(sh){
+    if(!confirm(`Retirer la signature de la feuille de ${sh.beneficiaire} (${sh.salarie}) ? Le salarié pourra la corriger, puis il faudra la refaire signer.`)) return;
+    try{
+      const res = await fetch('/api/beneficiaires', {
+        method: 'POST', headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ action: 'unlock', token: currentToken, salarie: sh.salarie, mois: sh.mois, beneficiaire: sh.beneficiaire })
+      });
+      const data = await res.json().catch(() => ({}));
+      if(!res.ok) throw new Error(data.error || 'Erreur');
+      showToast('Feuille déverrouillée');
+      loadBenef();
+    }catch(e){
+      showToast(e.message || 'Erreur lors du déverrouillage');
+    }
+  }
+
+  function exportBenefCsv(){
+    if(benefSheets.length === 0){ showToast('Aucune donnée à exporter'); return; }
+    const B = window.KmBenef;
+    const eur = (x) => String(x.toFixed(2)).replace('.', ',');
+    const rows = [['Salarié','Bénéficiaire','Date','Adresse de départ',"Adresse d'arrivée",'Km','Facturé client (€)','Remboursé salarié (€)','Signée par','Signée le']];
+    benefSheets.forEach(sh => {
+      const sig = sh.signature;
+      sh.trajets.slice().sort((a,b) => a.date.localeCompare(b.date)).forEach(t => {
+        rows.push([sh.salarie, sh.beneficiaire, t.date, t.depart, t.arrivee, String(t.km).replace('.', ','),
+          eur(B.montant(t.km, B.TAUX_FACTURATION)), eur(B.montant(t.km, B.TAUX_REMBOURSEMENT)),
+          sig ? sig.signataire : '', sig ? new Date(sig.signe_le).toLocaleString('fr-FR') : '']);
+      });
+    });
+    const csv = rows.map(r => r.map(c => '"' + String(c).replace(/"/g,'""') + '"').join(';')).join('\n');
+    const blob = new Blob(['\ufeff' + csv], { type: 'text/csv;charset=utf-8;' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `frais_kms_beneficiaires_${els.mois.value || 'mois'}.csv`;
+    document.body.appendChild(a); a.click(); a.remove();
+    URL.revokeObjectURL(url);
+  }
+  if(els.benefCsv) els.benefCsv.addEventListener('click', exportBenefCsv);
+
   function startPolling(){
     stopPolling();
     fetchSalaries();
@@ -1212,20 +1947,24 @@
     sessionStorage.setItem(SESSION_KEY, token);
     els.loginView.style.display = 'none';
     els.dashboardView.style.display = 'block';
+    els.benefView.style.display = 'block';
     lastList = data;
     render(data);
+    loadBenef();
     if(isActive) startPolling();
   }
 
   function exportCsv(){
-    if(!lastList || lastList.length === 0){ showToast('Aucune donnée à exporter'); return; }
-    const rows = [['Salarié','Jours','Total km','Forfait (€)']];
-    let totalKm = 0, totalForfait = 0;
-    lastList.forEach(item => {
-      totalKm += item.km; totalForfait += item.forfait;
-      rows.push([item.salarie, String(item.jours), String(item.km).replace('.', ','), String(item.forfait).replace('.', ',')]);
+    if(mergedList(lastList || []).length === 0){ showToast('Aucune donnée à exporter'); return; }
+    const merged = mergedList(lastList || []);
+    const n = (x, d) => String(Math.round(x * d) / d).replace('.', ',');
+    const rows = [['Salarié','Jours','Total km','Forfait (€)','Km bénéficiaires','Remb. bénéficiaires signés (€)','Remb. bénéficiaires non signés (€)','Total à rembourser (€)']];
+    let t = [0,0,0,0,0,0];
+    merged.forEach(item => {
+      t[0] += item.km; t[1] += item.forfait; t[2] += item.benefKm; t[3] += item.benefSigne; t[4] += item.benefAttente; t[5] += item.totalRemb;
+      rows.push([item.salarie, String(item.jours), n(item.km,10), n(item.forfait,100), n(item.benefKm,10), n(item.benefSigne,100), n(item.benefAttente,100), n(item.totalRemb,100)]);
     });
-    rows.push(['Total','', String(Math.round(totalKm*10)/10).replace('.', ','), String(Math.round(totalForfait*100)/100).replace('.', ',')]);
+    rows.push(['Total','', n(t[0],10), n(t[1],100), n(t[2],10), n(t[3],100), n(t[4],100), n(t[5],100)]);
     const csv = rows.map(r => r.map(c => '"' + String(c).replace(/"/g,'""') + '"').join(';')).join('\n');
     const blob = new Blob(['\ufeff' + csv], { type: 'text/csv;charset=utf-8;' });
     const url = URL.createObjectURL(blob);
@@ -1281,7 +2020,7 @@
   function showSalarie(){
     tabS.classList.add('active'); tabD.classList.remove('active');
     viewS.style.display = ''; viewD.style.display = 'none';
-    if(totalBar) totalBar.style.display = '';
+    if(totalBar) totalBar.style.display = (window.KmMode === 'benef') ? 'none' : '';
     if(window.DirectionView) window.DirectionView.deactivate();
   }
   function showDirection(){
