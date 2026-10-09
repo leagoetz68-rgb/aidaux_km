@@ -216,7 +216,6 @@
       <table>
         <thead><tr><th>Salarié</th><th>Jours</th><th>Km</th><th>Forfait</th></tr></thead>
         <tbody>${rows}</tbody>
-        <tfoot><tr class="total"><td>Total</td><td></td><td class="num">${fmtKm(totalKm)}</td><td class="num">${fmtEuro(totalForfait)}</td></tr></tfoot>
       </table>
     `;
     els.tableWrap.querySelectorAll('tr.salarie-row').forEach(tr => {
