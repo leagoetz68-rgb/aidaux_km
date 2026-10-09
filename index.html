@@ -1874,9 +1874,6 @@ window.KmBenef = (function(){
       <table class="dir-table">
         <thead><tr><th>Salarié</th><th>Jours</th><th>Km</th><th>Forfait</th><th>Km bénéf.</th><th>Remb. bénéf. (0,40 €/km)</th><th>Total à rembourser</th></tr></thead>
         <tbody>${rows}</tbody>
-        <tfoot><tr class="total"><td>Total</td><td></td><td class="num">${fmtKm(totalKm)}</td><td class="num">${fmtEuro(totalForfait)}</td>
-          <td class="num">${fmtKm(totalBenefKm)}</td><td class="num">${fmtEuro(totalBenef)}${totalAttente > 0 ? `<br><small>+ ${fmtEuro(totalAttente)} non signés</small>` : ''}</td>
-          <td class="num">${fmtEuro(totalRemb)}</td></tr></tfoot>
       </table>
       <p style="font-size:11.5px; color:var(--ink-soft); margin:8px 0 0;">Le remboursement des km bénéficiaires n'est compté dans le total qu'une fois la feuille signée par le bénéficiaire.</p>
     `;
@@ -2113,7 +2110,6 @@ window.KmBenef = (function(){
       t[0] += item.km; t[1] += item.forfait; t[2] += item.benefKm; t[3] += item.benefSigne; t[4] += item.benefAttente; t[5] += item.totalRemb;
       rows.push([item.salarie, String(item.jours), n(item.km,10), n(item.forfait,100), n(item.benefKm,10), n(item.benefSigne,100), n(item.benefAttente,100), n(item.totalRemb,100)]);
     });
-    rows.push(['Total','', n(t[0],10), n(t[1],100), n(t[2],10), n(t[3],100), n(t[4],100), n(t[5],100)]);
     const csv = rows.map(r => r.map(c => '"' + String(c).replace(/"/g,'""') + '"').join(';')).join('\n');
     const blob = new Blob(['\ufeff' + csv], { type: 'text/csv;charset=utf-8;' });
     const url = URL.createObjectURL(blob);
