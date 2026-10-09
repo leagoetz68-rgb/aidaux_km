@@ -1,0 +1,114 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Installer Aid'Aux KM</title>
+<link rel="icon" href="/favicon.ico" sizes="any">
+<link rel="apple-touch-icon" href="/icons/apple-touch-icon.png">
+<meta name="theme-color" content="#1B2A6B">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@600;700&family=IBM+Plex+Sans:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+  :root{ --bg:#F3F5FA; --surface:#fff; --ink:#182449; --ink-soft:#5B6690; --navy:#1B2A6B; --teal:#13B3B3; --teal-wash:#E1F6F5; --orange:#F0582F; --line:#DDE2EE; }
+  *{ box-sizing:border-box; }
+  body{ margin:0; background:var(--bg); color:var(--ink); font-family:'IBM Plex Sans',system-ui,sans-serif; font-size:16px; line-height:1.5; }
+  header{ background:linear-gradient(135deg,var(--navy),var(--teal)); color:#fff; padding:28px 18px 34px; text-align:center; }
+  header img{ width:84px; height:84px; border-radius:20px; background:#fff; box-shadow:0 4px 14px rgba(0,0,0,.18); }
+  h1{ font-family:'Space Grotesk',sans-serif; font-size:24px; margin:14px 0 4px; }
+  header p{ margin:0; opacity:.92; font-size:15px; }
+  main{ max-width:640px; margin:-16px auto 30px; padding:0 16px; }
+  .card{ background:var(--surface); border-radius:16px; padding:20px 18px; margin-bottom:16px; box-shadow:0 2px 10px rgba(27,42,107,.07); }
+  h2{ font-family:'Space Grotesk',sans-serif; font-size:19px; margin:0 0 4px; display:flex; align-items:center; gap:8px; }
+  .sub{ color:var(--ink-soft); font-size:14px; margin:0 0 14px; }
+  ol{ margin:0; padding:0; list-style:none; counter-reset:s; }
+  ol li{ counter-increment:s; position:relative; padding:0 0 14px 44px; }
+  ol li::before{ content:counter(s); position:absolute; left:0; top:-2px; width:30px; height:30px; border-radius:50%; background:var(--teal); color:#fff; font-weight:600; display:flex; align-items:center; justify-content:center; font-size:15px; }
+  b{ color:var(--navy); }
+  .tip{ background:var(--teal-wash); border-radius:10px; padding:10px 12px; font-size:14px; margin-top:4px; }
+  .warn{ background:#FDEDE8; border-radius:10px; padding:10px 12px; font-size:14px; color:#8a2f17; margin-top:4px; }
+  .btn{ display:block; text-align:center; background:var(--navy); color:#fff; text-decoration:none; font-weight:600; padding:14px; border-radius:12px; margin-top:6px; }
+  .yours{ outline:3px solid var(--orange); }
+  .badge{ display:none; font-size:12px; background:var(--orange); color:#fff; border-radius:20px; padding:2px 10px; font-family:'IBM Plex Sans',sans-serif; font-weight:600; }
+  .yours .badge{ display:inline-block; }
+  .qr{ text-align:center; }
+  .qr img{ width:180px; height:180px; }
+  .url{ font-family:monospace; font-size:14px; word-break:break-all; color:var(--navy); }
+  @media print{
+    body{ background:#fff; }
+    header{ background:none; color:var(--ink); padding:10px 0; }
+    header img{ box-shadow:none; }
+    .card{ box-shadow:none; border:1px solid var(--line); break-inside:avoid; }
+    .btn, .no-print{ display:none; }
+    .yours{ outline:none; }
+    .yours .badge{ display:none; }
+  }
+</style>
+</head>
+<body>
+<header>
+  <img src="/icons/icon-192.png" alt="Logo AID'Aux">
+  <h1>Installer Aid'Aux KM</h1>
+  <p>Vos frais kilométriques, directement sur votre téléphone.<br>À faire une seule fois, en 1 minute.</p>
+</header>
+
+<main>
+  <div class="card" id="iphone">
+    <h2>🍎 Sur iPhone <span class="badge">Votre téléphone</span></h2>
+    <p class="sub">Obligatoirement avec <b>Safari</b> (la boussole bleue).</p>
+    <ol>
+      <li>Ouvrez ce lien dans <b>Safari</b> :<br><span class="url">aidaux-km.vercel.app/?salarie</span></li>
+      <li>Touchez le bouton <b>Partager</b> : le carré avec une flèche vers le haut ⬆️ (sur les iPhone récents, touchez d'abord les <b>« … »</b> en bas à droite).</li>
+      <li>Faites défiler la liste vers le bas et touchez <b>« Sur l'écran d'accueil »</b> ➕.</li>
+      <li>Vérifiez que <b>« Ouvrir en tant qu'app web »</b> est activé, puis touchez <b>Ajouter</b> en haut à droite.</li>
+    </ol>
+    <p class="warn">⚠️ Ne choisissez pas « Enregistrer dans Fichiers », « PDF » ou « Archive web » : cela enregistre juste la page.</p>
+  </div>
+
+  <div class="card" id="android">
+    <h2>🤖 Sur Android <span class="badge">Votre téléphone</span></h2>
+    <p class="sub">Avec <b>Chrome</b> (de préférence).</p>
+    <ol>
+      <li>Ouvrez ce lien dans <b>Chrome</b> :<br><span class="url">aidaux-km.vercel.app/?salarie</span></li>
+      <li>Si un bandeau <b>« Installer l'application »</b> apparaît en bas, touchez <b>Installer</b>. C'est fini !</li>
+      <li>Sinon, touchez les <b>⋮</b> en haut à droite, puis <b>« Installer l'application »</b> (ou <b>« Ajouter à l'écran d'accueil »</b>), puis <b>Installer</b>.</li>
+    </ol>
+    <p class="tip">📱 Samsung Internet : menu <b>≡</b> → <b>« Ajouter la page à »</b> → <b>« Écran d'accueil »</b>.</p>
+  </div>
+
+  <div class="card">
+    <h2>✅ C'est installé !</h2>
+    <p class="sub" style="margin-bottom:8px;">L'icône AID'Aux (le cœur) apparaît sur votre écran d'accueil, à côté de Ximi.</p>
+    <ol>
+      <li>Touchez l'icône : l'application s'ouvre en plein écran.</li>
+      <li>La première fois, indiquez votre <b>nom</b> et l'<b>adresse de votre domicile</b>. Ils sont retenus pour les fois suivantes.</li>
+      <li>Ajoutez vos trajets au fil du mois : les kilomètres et le forfait se calculent tout seuls.</li>
+    </ol>
+    <a class="btn" href="/?salarie">Ouvrir Aid'Aux KM</a>
+  </div>
+
+  <div class="card qr">
+    <h2 style="justify-content:center;">📷 Partager ce guide</h2>
+    <p class="sub">Scannez ce code avec l'appareil photo du téléphone pour ouvrir ce guide.</p>
+    <img src="/icons/qr-installer.png" alt="QR code vers le guide d'installation">
+    <p class="url">aidaux-km.vercel.app/installer.html</p>
+    <a class="btn no-print" href="#" onclick="window.print();return false;">🖨️ Imprimer ce guide</a>
+  </div>
+</main>
+
+<script>
+  // Met en avant la section correspondant au téléphone utilisé (et la place en premier).
+  (function(){
+    var ua = navigator.userAgent || '';
+    var ios = /iPhone|iPad|iPod/.test(ua) || (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
+    var android = /Android/.test(ua);
+    var id = ios ? 'iphone' : (android ? 'android' : null);
+    if(!id) return;
+    var el = document.getElementById(id);
+    el.classList.add('yours');
+    el.parentNode.insertBefore(el, el.parentNode.firstChild);
+  })();
+</script>
+</body>
+</html>
