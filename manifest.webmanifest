@@ -2,7 +2,7 @@
   "name": "Aid'Aux KM — Frais kilométriques",
   "short_name": "Aid'Aux KM",
   "description": "Saisie des trajets et frais kilométriques AID'Aux",
-  "start_url": "/",
+  "start_url": "/?salarie",
   "scope": "/",
   "display": "standalone",
   "background_color": "#ffffff",
