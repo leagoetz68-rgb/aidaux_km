@@ -889,6 +889,137 @@ window.KmBenef = (function(){
     doc.save(`km_beneficiaire_${slug(sheet.beneficiaire)}_${sheet.mois}.pdf`);
   }
 
+  // ---------- Fiche mensuelle d'un salarié (récapitulatif direction) ----------
+  // info = { salarie, mois, jours, km, forfait, benefKm, benefSigne, benefAttente, totalRemb,
+  //          trajets: [{date, depart, arrivee, km}], benefSheets: [sheet...], calcForfait: fn }
+  async function downloadSalariePdf(info){
+    let jsPDF;
+    try{ jsPDF = await loadJsPdf(); }
+    catch(e){ alert('Impossible de générer le PDF (connexion ?). Réessayez.'); return; }
+
+    const doc = new jsPDF({ orientation: 'portrait', unit: 'mm', format: 'a4' });
+    const W = 210, H = 297, M = 12, tableW = W - 2 * M;
+    doc.setTextColor(0); doc.setDrawColor(0); doc.setLineWidth(0.3);
+    let y = 18;
+    const page = (need) => { if(y + need > H - M){ doc.addPage(); y = M + 4; } };
+
+    // Titre
+    const title = 'Frais kilométriques du mois';
+    doc.setFont('helvetica', 'bold'); doc.setFontSize(16);
+    const tw = doc.getTextWidth(title);
+    doc.text(title, W / 2, y, { align: 'center' });
+    doc.line(W / 2 - tw / 2, y + 1.3, W / 2 + tw / 2, y + 1.3);
+    y += 12;
+    doc.setFontSize(11);
+    const meta = (label, value) => {
+      doc.setFont('helvetica', 'normal'); doc.text(label, M, y);
+      const lw = doc.getTextWidth(label); doc.line(M, y + 0.9, M + lw, y + 0.9);
+      doc.setFont('helvetica', 'bold'); doc.text(String(value || ''), M + lw + 3, y);
+      y += 7;
+    };
+    meta('MOIS CONCERNÉ :', moisLabel(info.mois));
+    meta('NOM DU SALARIÉ :', info.salarie);
+    y += 2;
+
+    // Tableau générique
+    const table = (cols, rows, opts = {}) => {
+      const drawRow = (cells, o = {}) => {
+        doc.setFont('helvetica', o.bold || o.header ? 'bold' : 'normal'); doc.setFontSize(o.header ? 8.5 : 9);
+        const lines = cells.map((c, i) => doc.splitTextToSize(String(c == null ? '' : c), cols[i].w - 3));
+        const h = Math.max(7, Math.max(...lines.map(l => l.length)) * 3.9 + 3);
+        if(y + h > H - M){ doc.addPage(); y = M + 4; if(!o.header) drawRow(cols.map(c => c.h), { header: true }); }
+        let x = M;
+        cols.forEach((col, i) => {
+          if(o.header || o.fill){ doc.setFillColor(235, 235, 235); doc.rect(x, y, col.w, h, 'FD'); }
+          else doc.rect(x, y, col.w, h);
+          if(lines[i].length){
+            if(col.right && !o.header) doc.text(lines[i], x + col.w - 1.5, y + 4.8, { align: 'right' });
+            else doc.text(lines[i], x + 1.5, y + 4.8);
+          }
+          x += col.w;
+        });
+        y += h;
+      };
+      drawRow(cols.map(c => c.h), { header: true });
+      rows.forEach(r => drawRow(r.cells, r));
+    };
+    const section = (txt) => {
+      page(16);
+      doc.setFont('helvetica', 'bold'); doc.setFontSize(11.5);
+      doc.text(txt, M, y + 4); y += 8;
+    };
+    const euro = (n) => fmtEuro(Number(n || 0));
+    const dateCourte = (iso) => new Date(iso + 'T00:00:00').toLocaleDateString('fr-FR');
+
+    // 1. Trajets domicile (forfait)
+    section('1. Trajets du mois (forfait km journalier)');
+    const trajets = (info.trajets || []).slice().sort((a, b) =>
+      a.date.localeCompare(b.date) || String(a.ordre ?? '').localeCompare(String(b.ordre ?? '')));
+    if(trajets.length){
+      const byDate = {};
+      trajets.forEach(t => (byDate[t.date] = byDate[t.date] || []).push(t));
+      const rows = [];
+      Object.keys(byDate).sort().forEach(date => {
+        const legs = byDate[date];
+        const dayKm = legs.reduce((s, l) => s + Number(l.km || 0), 0);
+        legs.forEach((leg, i) => rows.push({ cells: [
+          i === 0 ? dateCourte(date) : '', leg.depart, leg.arrivee, fmtKmNum(leg.km),
+          i === legs.length - 1 ? fmtKmNum(dayKm) : '',
+          i === legs.length - 1 ? euro(info.calcForfait ? info.calcForfait(dayKm) : 0) : ''
+        ]}));
+      });
+      rows.push({ bold: true, fill: true, cells: ['Total', `${info.jours} jour(s)`, '', fmtKmNum(info.km), '', euro(info.forfait)] });
+      table([
+        { h: 'Date', w: 22 }, { h: 'Départ', w: 56 }, { h: 'Arrivée', w: 56 },
+        { h: 'Km', w: 16, right: true }, { h: 'Total jour', w: 18, right: true }, { h: 'Forfait jour', w: tableW - 168, right: true },
+      ], rows);
+    } else {
+      doc.setFont('helvetica', 'italic'); doc.setFontSize(9.5);
+      doc.text('Aucun trajet domicile enregistré ce mois-ci.', M, y + 3); y += 7;
+    }
+    y += 6;
+
+    // 2. Km pour le compte des bénéficiaires
+    const sheets = info.benefSheets || [];
+    if(sheets.length){
+      section(`2. Km pour le compte des bénéficiaires (${fmtEuro(TAUX_REMBOURSEMENT).replace(' €', '')} €/km)`);
+      const rows = sheets.map(sh => {
+        const km = totalKm(sh.trajets);
+        const sig = sh.signature;
+        return { cells: [
+          sh.beneficiaire, String(sh.trajets.length), fmtKmNum(km), euro(montant(km, TAUX_REMBOURSEMENT)),
+          sig ? `Signée par ${sig.signataire} le ${new Date(sig.signe_le).toLocaleDateString('fr-FR')}` : 'Non signée (non remboursée)'
+        ]};
+      });
+      rows.push({ bold: true, fill: true, cells: ['Total', '', fmtKmNum(info.benefKm), euro(info.benefSigne + info.benefAttente), ''] });
+      table([
+        { h: 'Bénéficiaire', w: 48 }, { h: 'Trajets', w: 16, right: true }, { h: 'Km', w: 18, right: true },
+        { h: 'Remb. (0,40 €/km)', w: 30, right: true }, { h: 'Signature', w: tableW - 112 },
+      ], rows);
+      y += 6;
+    }
+
+    // 3. Récapitulatif
+    section((sheets.length ? '3' : '2') + '. Récapitulatif à rembourser');
+    const recap = [
+      { cells: ['Forfait km journalier', euro(info.forfait)] },
+      { cells: ['Km bénéficiaires (feuilles signées)', euro(info.benefSigne)] },
+    ];
+    if(info.benefAttente > 0) recap.push({ cells: ['Km bénéficiaires non signés (non comptés)', euro(info.benefAttente)] });
+    recap.push({ bold: true, fill: true, cells: ['TOTAL À REMBOURSER', euro(info.totalRemb)] });
+    table([{ h: 'Détail', w: 120 }, { h: 'Montant', w: tableW - 120, right: true }], recap);
+
+    // Pied de page
+    const n = doc.getNumberOfPages();
+    for(let i = 1; i <= n; i++){
+      doc.setPage(i); doc.setFont('helvetica', 'normal'); doc.setFontSize(8); doc.setTextColor(110);
+      doc.text(`Aid'Aux — ${info.salarie} — ${moisLabel(info.mois)} — édité le ${new Date().toLocaleDateString('fr-FR')}`, M, H - 6);
+      doc.text(`Page ${i}/${n}`, W - M, H - 6, { align: 'right' });
+      doc.setTextColor(0);
+    }
+    doc.save(`frais_km_${slug(info.salarie)}_${info.mois}.pdf`);
+  }
+
   // Regroupe les trajets par (salarié, bénéficiaire) et y rattache la signature
   function groupSheets(data, mois){
     const map = new Map();
@@ -919,7 +1050,7 @@ window.KmBenef = (function(){
     return out;
   }
 
-  return { downloadPdf, groupSheets, totalKm, moisLabel, fmtKmNum, fmtEuro, montant, remboursementsParSalarie,
+  return { downloadPdf, downloadSalariePdf, groupSheets, totalKm, moisLabel, fmtKmNum, fmtEuro, montant, remboursementsParSalarie,
            TAUX_FACTURATION, TAUX_REMBOURSEMENT };
 })();
 
@@ -1873,19 +2004,27 @@ window.KmBenef = (function(){
         <td class="num km">${fmtKm(item.benefKm)}</td>
         <td class="num forfait">${fmtEuro(item.benefSigne)}${attente}</td>
         <td class="num"><strong>${fmtEuro(item.totalRemb)}</strong></td>
+        <td class="row-actions"><button class="tab-btn" data-spdf="${escapeHtml(item.salarie)}" type="button" title="Télécharger le détail du mois en PDF">⬇️ PDF</button></td>
       </tr>`;
       if(isOpen){
-        html += `<tr class="detail-row"><td colspan="7"><div class="detail-wrap" id="dir-detail-wrap"><div class="detail-loading">Chargement du détail...</div></div></td></tr>`;
+        html += `<tr class="detail-row"><td colspan="8"><div class="detail-wrap" id="dir-detail-wrap"><div class="detail-loading">Chargement du détail...</div></div></td></tr>`;
       }
       return html;
     }).join('');
     els.tableWrap.innerHTML = `
       <table class="dir-table">
-        <thead><tr><th>Salarié</th><th>Jours</th><th>Km</th><th>Forfait</th><th>Km bénéf.</th><th>Remb. bénéf. (0,40 €/km)</th><th>Total à rembourser</th></tr></thead>
+        <thead><tr><th>Salarié</th><th>Jours</th><th>Km</th><th>Forfait</th><th>Km bénéf.</th><th>Remb. bénéf. (0,40 €/km)</th><th>Total à rembourser</th><th></th></tr></thead>
         <tbody>${rows}</tbody>
       </table>
       <p style="font-size:11.5px; color:var(--ink-soft); margin:8px 0 0;">Le remboursement des km bénéficiaires n'est compté dans le total qu'une fois la feuille signée par le bénéficiaire.</p>
     `;
+    els.tableWrap.querySelectorAll('[data-spdf]').forEach(btn => {
+      btn.addEventListener('click', (ev) => {
+        ev.stopPropagation();   // ne pas ouvrir/fermer le détail
+        const item = merged.find(m => m.salarie === btn.getAttribute('data-spdf'));
+        if(item) downloadSalariePdf(item, btn);
+      });
+    });
     els.tableWrap.querySelectorAll('tr.salarie-row').forEach(tr => {
       tr.addEventListener('click', () => {
         const salarie = tr.getAttribute('data-salarie');
@@ -1894,6 +2033,26 @@ window.KmBenef = (function(){
         if(expandedSalarie) loadDetail(expandedSalarie);
       });
     });
+  }
+
+  async function downloadSalariePdf(item, btn){
+    const mois = els.mois.value || todayMonth();
+    const label = btn ? btn.textContent : '';
+    if(btn){ btn.disabled = true; btn.textContent = '…'; }
+    try{
+      const res = await fetch('/api/trajets?salarie=' + encodeURIComponent(item.salarie) + '&mois=' + encodeURIComponent(mois));
+      const trajets = await res.json();
+      if(!res.ok) throw new Error('Erreur de chargement des trajets');
+      await window.KmBenef.downloadSalariePdf({
+        ...item, mois, trajets: Array.isArray(trajets) ? trajets : [],
+        benefSheets: benefSheets.filter(sh => sh.salarie === item.salarie),
+        calcForfait,
+      });
+    }catch(e){
+      alert('PDF impossible : ' + e.message);
+    }finally{
+      if(btn){ btn.disabled = false; btn.textContent = label; }
+    }
   }
 
   async function loadDetail(salarie){
