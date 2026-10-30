@@ -1,5 +1,6 @@
 const { getPool, ensureSchema } = require('../lib/db');
 const { verifyToken } = require('../lib/sessionToken');
+const { ajouterClesTri } = require('../lib/triNoms');
 
 function calcForfait(km) {
   if (km <= 20.99) return 2;
@@ -76,6 +77,7 @@ module.exports = async (req, res) => {
       };
     });
 
+    await ajouterClesTri(pool, result); // ordre alphabétique des noms de famille
     res.status(200).json(result);
   } catch (e) {
     console.error('api/salaries', e);
