@@ -1981,7 +1981,11 @@ window.KmBenef = (function(){
       const b = benefParSalarie[item.salarie] || { km: 0, signe: 0, attente: 0 };
       return { ...item, benefKm: b.km, benefSigne: b.signe, benefAttente: b.attente,
                totalRemb: Math.round((item.forfait + b.signe) * 100) / 100 };
-    }).sort((a, b) => a.salarie.localeCompare(b.salarie, 'fr'));
+    }).sort((a, b) => {
+      // ordre alphabétique des noms de famille (clé calculée par le serveur)
+      const ka = a.cleTri || a.salarie.toLowerCase(), kb = b.cleTri || b.salarie.toLowerCase();
+      return ka.localeCompare(kb, 'fr') || a.salarie.localeCompare(b.salarie, 'fr');
+    });
   }
 
   function render(list){
