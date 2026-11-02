@@ -394,6 +394,13 @@
   #view-direction .benef-status-todo{ color: var(--coral); font-weight:600; }
   #view-direction .row-actions{ white-space:nowrap; }
   #view-direction .row-actions .tab-btn{ margin-right:4px; }
+  #view-direction .btn-suppr{
+    border:none; background:transparent; color: var(--ink-soft); cursor:pointer;
+    width:26px; height:26px; border-radius:50%; font-size:15px; line-height:1;
+    display:inline-flex; align-items:center; justify-content:center; flex-shrink:0; margin-left:auto;
+  }
+  #view-direction .btn-suppr:hover{ background: var(--coral-wash); color: var(--coral); }
+  #view-direction .btn-suppr:disabled{ opacity:0.4; cursor:wait; }
 
   @media print{
     .hero, .view-tabs, .mode-switch, .toolbar, .swap-btn, .leg-del, .no-print, .btn-primary, .checkbox-row, .total-bar{ display:none !important; }
@@ -2005,7 +2012,7 @@ window.KmBenef = (function(){
       const isOpen = expandedSalarie === item.salarie;
       const attente = item.benefAttente > 0 ? `<br><small style="color:var(--ink-soft);">+ ${fmtEuro(item.benefAttente)} non signés</small>` : '';
       let html = `<tr class="salarie-row${isOpen ? ' open' : ''}" data-salarie="${escapeHtml(item.salarie)}">
-        <td><span class="chevron">▶</span> ${escapeHtml(item.salarie)}</td>
+        <td><span class="chevron">▶</span> ${escapeHtml(item.salarie)}<button class="btn-suppr" data-suppr="${escapeHtml(item.salarie)}" type="button" title="Supprimer ce salarié pour le mois">✕</button></td>
         <td class="num">${item.jours}</td>
         <td class="num km">${fmtKm(item.km)}</td>
         <td class="num forfait">${fmtEuro(item.forfait)}</td>
@@ -2033,6 +2040,12 @@ window.KmBenef = (function(){
         if(item) downloadSalariePdf(item, btn);
       });
     });
+    els.tableWrap.querySelectorAll('[data-suppr]').forEach(btn => {
+      btn.addEventListener('click', (ev) => {
+        ev.stopPropagation();   // ne pas ouvrir/fermer le détail
+        supprimerSalarie(btn.getAttribute('data-suppr'), btn);
+      });
+    });
     els.tableWrap.querySelectorAll('tr.salarie-row').forEach(tr => {
       tr.addEventListener('click', () => {
         const salarie = tr.getAttribute('data-salarie');
@@ -2041,6 +2054,28 @@ window.KmBenef = (function(){
         if(expandedSalarie) loadDetail(expandedSalarie);
       });
     });
+  }
+
+  async function supprimerSalarie(salarie, btn){
+    const mois = els.mois.value || todayMonth();
+    const libMois = new Date(mois + '-01T12:00:00').toLocaleDateString('fr-FR', { month: 'long', year: 'numeric' });
+    const ok = confirm(`Êtes-vous sûr de vouloir supprimer ${salarie} ?\n\n`
+      + `Tous ses trajets de ${libMois} (domicile et bénéficiaires, signatures comprises) seront effacés définitivement.\n`
+      + `Les autres mois ne sont pas touchés.`);
+    if(!ok) return;
+    btn.disabled = true;
+    try{
+      const res = await fetch('/api/salaries?mois=' + encodeURIComponent(mois)
+        + '&salarie=' + encodeURIComponent(salarie) + '&token=' + encodeURIComponent(currentToken), { method: 'DELETE' });
+      const data = await res.json().catch(() => ({}));
+      if(!res.ok) throw new Error(data.error || 'Suppression impossible');
+      if(expandedSalarie === salarie) expandedSalarie = null;
+      showToast(salarie + ' supprimé(e)');
+      fetchSalaries();
+    }catch(e){
+      alert('Suppression impossible : ' + e.message);
+      btn.disabled = false;
+    }
   }
 
   async function downloadSalariePdf(item, btn){
