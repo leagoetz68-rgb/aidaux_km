@@ -20,7 +20,41 @@ function describeError(e) {
   return parts.join(' — ') || String(e) || 'inconnue';
 }
 
+// DELETE ?mois=&salarie=&token= -> (direction) supprime tout le mois d'un salarié :
+// trajets domicile, trajets bénéficiaires et signatures. Les autres mois ne sont pas touchés.
+async function supprimerSalarieMois(req, res) {
+  const { mois, salarie, token } = req.query;
+  let email;
+  try { email = verifyToken(token); } catch (e) { email = null; }
+  if (!email) { res.status(401).json({ error: 'Session invalide ou expirée' }); return; }
+  if (!mois || !salarie) { res.status(400).json({ error: 'Paramètres mois et salarie requis' }); return; }
+
+  const pool = getPool();
+  await ensureSchema(pool);
+  const client = await pool.connect();
+  try {
+    await client.query('BEGIN');
+    const t = await client.query('DELETE FROM frais_km_trajets WHERE salarie = $1 AND mois = $2', [salarie, mois]);
+    const b = await client.query('DELETE FROM frais_km_benef_trajets WHERE salarie = $1 AND mois = $2', [salarie, mois]);
+    await client.query('DELETE FROM frais_km_benef_signatures WHERE salarie = $1 AND mois = $2', [salarie, mois]);
+    await client.query('COMMIT');
+    console.log(`Suppression ${salarie} / ${mois} par ${email} : ${t.rowCount} trajets, ${b.rowCount} trajets bénéf.`);
+    res.status(200).json({ ok: true, trajets: t.rowCount, trajetsBenef: b.rowCount });
+  } catch (e) {
+    await client.query('ROLLBACK').catch(() => {});
+    console.error('api/salaries DELETE', e);
+    res.status(500).json({ error: 'Erreur serveur : ' + describeError(e) });
+  } finally {
+    client.release();
+  }
+}
+
 module.exports = async (req, res) => {
+  if (req.method === 'DELETE') {
+    try { await supprimerSalarieMois(req, res); }
+    catch (e) { res.status(500).json({ error: 'Erreur serveur : ' + describeError(e) }); }
+    return;
+  }
   if (req.method !== 'GET') {
     res.status(405).json({ error: 'Méthode non autorisée' });
     return;
