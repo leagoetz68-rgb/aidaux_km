@@ -2209,8 +2209,6 @@ window.KmBenef = (function(){
       <table class="dir-table">
         <thead><tr><th>Salarié</th><th>Bénéficiaire</th><th>Trajets</th><th>Km</th><th>Facturé client (1 €/km)</th><th>Remb. salarié (0,40 €/km)</th><th>Signature</th><th></th></tr></thead>
         <tbody>${rows}</tbody>
-        <tfoot><tr class="total"><td colspan="3">Total — ${nbSigned}/${benefSheets.length} feuille(s) signée(s)</td><td class="num">${fmtKm(totalKm)}</td>
-          <td class="num">${B.fmtEuro(B.montant(totalKm, B.TAUX_FACTURATION))}</td><td class="num">${B.fmtEuro(B.montant(totalKm, B.TAUX_REMBOURSEMENT))}</td><td colspan="2"></td></tr></tfoot>
       </table>`;
     els.benefWrap.querySelectorAll('[data-bprint]').forEach(b => b.addEventListener('click', () => {
       window.KmBenef.downloadPdf(benefSheets[Number(b.dataset.bprint)]);
