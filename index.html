@@ -397,6 +397,9 @@
   #view-direction table.dir-table tr.benef-row-ok td:first-child{ box-shadow: inset 4px 0 0 #13B3B3; }
   #view-direction table.dir-table tr.benef-row-todo td{ background:#FDECE7; }
   #view-direction table.dir-table tr.benef-row-todo td:first-child{ box-shadow: inset 4px 0 0 #E8583A; }
+  #view-direction tr.benef-row{ cursor:pointer; }
+  #view-direction tr.benef-row .chevron{ display:inline-block; transition: transform 0.15s; font-size:11px; color: var(--ink-soft); margin-right:4px; }
+  #view-direction tr.benef-row.open .chevron{ transform: rotate(90deg); }
   /* Séparation plus marquée quand on passe à un autre client */
   #view-direction table.dir-table tr.benef-group-start td{ border-top:2px solid var(--navy); }
   #view-direction .row-actions{ white-space:nowrap; }
@@ -1989,6 +1992,7 @@ window.KmBenef = (function(){
     benefView: $('dir-benef-view'), benefWrap: $('dir-benef-wrap'), benefEmpty: $('dir-benef-empty'), benefCsv: $('dir-benef-csv'),
   };
   let benefSheets = [];
+  let expandedBenef = null;   // clé « salarié|bénéficiaire » de la feuille dont on affiche le détail
   let benefParSalarie = {};
 
   let currentToken = '';
@@ -2264,9 +2268,11 @@ window.KmBenef = (function(){
       const status = sig
         ? `<span class="benef-status-ok">✔ Signée</span><br><small>${escapeHtml(sig.signataire)} — ${new Date(sig.signe_le).toLocaleDateString('fr-FR')}</small>`
         : '<span class="benef-status-todo">Non signée</span>';
-      const rowCls = (sig ? 'benef-row-ok' : 'benef-row-todo') + (groupStart ? ' benef-group-start' : '');
-      return `<tr class="${rowCls}">
-        <td>${escapeHtml(sh.salarie)}</td>
+      const key = sh.salarie + '|' + sh.beneficiaire;
+      const isOpen = expandedBenef === key;
+      const rowCls = 'benef-row ' + (sig ? 'benef-row-ok' : 'benef-row-todo') + (groupStart ? ' benef-group-start' : '') + (isOpen ? ' open' : '');
+      return `<tr class="${rowCls}" data-bkey="${escapeHtml(key)}">
+        <td><span class="chevron">▶</span> ${escapeHtml(sh.salarie)}</td>
         <td>${escapeHtml(sh.beneficiaire)}</td>
         <td class="num">${sh.trajets.length}</td>
         <td class="num km">${fmtKm(km)}</td>
@@ -2277,7 +2283,7 @@ window.KmBenef = (function(){
           <button class="tab-btn" data-bprint="${idx}" type="button">⬇️ PDF</button>
           ${sig ? `<button class="tab-btn" data-bunlock="${idx}" type="button" title="Retirer la signature pour permettre une correction">🔓</button>` : ''}
         </td>
-      </tr>`;
+      </tr>${isOpen ? benefDetailRow(sh) : ''}`;
     }).join('');
     els.benefWrap.innerHTML = `
       <table class="dir-table">
@@ -2288,6 +2294,35 @@ window.KmBenef = (function(){
       window.KmBenef.downloadPdf(benefSheets[Number(b.dataset.bprint)]);
     }));
     els.benefWrap.querySelectorAll('[data-bunlock]').forEach(b => b.addEventListener('click', () => unlockBenef(benefSheets[Number(b.dataset.bunlock)])));
+    // Clic sur une ligne : ouvre / ferme le détail des trajets (sauf clic sur un bouton)
+    els.benefWrap.querySelectorAll('tr.benef-row').forEach(tr => tr.addEventListener('click', (ev) => {
+      if(ev.target.closest('button')) return;
+      expandedBenef = (expandedBenef === tr.dataset.bkey) ? null : tr.dataset.bkey;
+      renderBenef();
+    }));
+  }
+
+  // Ligne de détail : la liste des trajets de la feuille bénéficiaire
+  function benefDetailRow(sh){
+    const B = window.KmBenef;
+    const dfr = (iso) => new Date(iso + 'T00:00:00').toLocaleDateString('fr-FR');
+    const trajets = sh.trajets.slice().sort((a, b) => a.date.localeCompare(b.date) || (a.id || 0) - (b.id || 0));
+    const lignes = trajets.length
+      ? trajets.map(t => `<tr>
+          <td>${dfr(t.date)}</td>
+          <td>${escapeHtml(t.depart || '')}</td>
+          <td>${escapeHtml(t.arrivee || '')}</td>
+          <td class="num">${fmtKm(t.km)}</td>
+        </tr>`).join('')
+      : '<tr><td colspan="4">Aucun trajet sur cette feuille.</td></tr>';
+    const total = B.totalKm(sh.trajets);
+    return `<tr class="detail-row"><td colspan="8"><div class="detail-wrap">
+      <table class="detail-table">
+        <thead><tr><th>Date</th><th>Départ</th><th>Arrivée</th><th>Km</th></tr></thead>
+        <tbody>${lignes}</tbody>
+        <tfoot><tr><td colspan="3"><strong>Total ${escapeHtml(sh.beneficiaire)}</strong></td><td class="cell-total">${fmtKm(total)}</td></tr></tfoot>
+      </table>
+    </div></td></tr>`;
   }
 
   async function unlockBenef(sh){
