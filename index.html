@@ -409,7 +409,7 @@
   #view-direction .btn-suppr:hover{ background: var(--coral-wash); color: var(--coral); }
   #view-direction .btn-suppr:disabled{ opacity:0.4; cursor:wait; }
 
-  /* ===== Habillage « app » ===== */
+  /* ===== Style des tableaux direction ===== */
   /* Valeurs à zéro atténuées pour alléger le tableau */
   #view-direction td.num.zero{ color: var(--ink-soft); opacity:0.45; font-weight:500; }
   /* Cellule du nom : le contenu est mis en flex dans un conteneur, pas la cellule elle-même */
@@ -419,7 +419,7 @@
   #view-direction .btn-suppr{ opacity:0; transition: opacity 0.15s; }
   #view-direction tr.salarie-row:hover .btn-suppr, #view-direction .btn-suppr:focus-visible{ opacity:1; }
   @media (hover: none){ #view-direction .btn-suppr{ opacity:0.6; } }
-  /* Tableaux façon app : coins arrondis, plus de quadrillage vertical */
+  /* Coins arrondis, en-tête bleu marine, plus de quadrillage vertical */
   #view-direction table.dir-table{
     border-collapse:separate; border-spacing:0;
     border:1px solid var(--line); border-radius:12px; overflow:hidden;
@@ -431,32 +431,22 @@
   #view-direction table.dir-table thead th{ background: var(--navy); color:#fff; font-size:10.5px; }
   #view-direction table.dir-table tr.salarie-row:hover td{ background: var(--teal-wash); }
 
+  /* ===== Fond façon app : plus de blanc autour, un fond aux couleurs Aid'Aux ===== */
   @media (min-width: 900px){
-    /* Bandeau dégradé sur toute la largeur, les cartes flottent dessus */
-    body::before{
-      content:""; position:absolute; top:0; left:0; right:0; height:360px; z-index:0;
+    body{
       background:
-        radial-gradient(circle at 85% 20%, rgba(232,88,58,0.35), transparent 32%),
-        linear-gradient(135deg, var(--navy) 0%, #15508F 50%, var(--teal) 100%);
+        radial-gradient(circle at 12% 18%, rgba(19,179,179,0.28), transparent 38%),
+        radial-gradient(circle at 88% 78%, rgba(232,88,58,0.18), transparent 36%),
+        linear-gradient(160deg, #DCE3F3 0%, #E4F2F3 100%);
+      background-attachment: fixed;
+      min-height:100vh;
     }
-    body{ background: #E9EDF6; }
-    .app{ position:relative; z-index:1; max-width:1200px; padding:0 32px 80px; }
-    .hero{ background:transparent; border-radius:0; padding:36px 4px 48px; overflow:visible; }
-    .hero::after{ display:none; }
-    .hero h1{ font-size:28px; }
-    .view-tabs{ margin:-20px 0 8px; }
-    .card{ margin:18px 0; padding:22px 26px; border-radius:18px;
-           box-shadow: 0 1px 2px rgba(27,42,107,0.06), 0 18px 40px -20px rgba(27,42,107,0.35); }
-    .card + .card{ margin-top:18px; }
-    /* La vue salarié garde une largeur confortable pour les formulaires */
-    #view-salarie{ max-width:860px; margin:0 auto; }
   }
 
   @media print{
     .hero, .view-tabs, .mode-switch, .toolbar, .swap-btn, .leg-del, .no-print, .btn-primary, .checkbox-row, .total-bar{ display:none !important; }
     .card{ box-shadow:none; margin: 0 0 12px; border:1px solid #ccc; }
     body{ background:white; }
-    body::before{ display:none !important; }
     tr.total-row td{ background:#eee !important; color:#000 !important; }
   }
 </style>
