@@ -431,13 +431,36 @@
   #view-direction table.dir-table thead th{ background: var(--navy); color:#fff; font-size:10.5px; }
   #view-direction table.dir-table tr.salarie-row:hover td{ background: var(--teal-wash); }
 
-  /* ===== Fond façon app : bleu marine autour de l'appli ===== */
+  /* ===== Menu latéral (ordinateur uniquement) ===== */
+  .side-nav, .page-head{ display:none; }
   @media (min-width: 900px){
-    body{
-      background: var(--navy);
-      background-attachment: fixed;
-      min-height:100vh;
+    body.has-side .side-nav{
+      display:flex; flex-direction:column; gap:4px;
+      position:fixed; top:0; left:0; bottom:0; width:230px; z-index:10;
+      background: var(--navy); color:#fff; padding:22px 14px;
     }
+    .side-brand{ display:flex; align-items:center; gap:10px; padding:0 8px 22px; }
+    .side-brand .brand-name{ font-size:15px; }
+    .side-section{ font-size:10.5px; text-transform:uppercase; letter-spacing:0.08em; opacity:0.5; padding:14px 10px 6px; }
+    .side-link{
+      display:flex; align-items:center; gap:10px; width:100%;
+      background:transparent; border:none; color:rgba(255,255,255,0.75); cursor:pointer;
+      font-family: var(--font-display); font-weight:600; font-size:13.5px; text-align:left;
+      padding:10px 12px; border-radius:10px; transition: background 0.15s, color 0.15s;
+    }
+    .side-link:hover{ background: rgba(255,255,255,0.08); color:#fff; }
+    .side-link.active{ background: rgba(255,255,255,0.16); color:#fff; box-shadow: inset 3px 0 0 var(--teal); }
+    .side-link.sub{ font-size:12.5px; padding:8px 12px 8px 34px; font-weight:500; }
+    .side-foot{ margin-top:auto; font-size:11px; opacity:0.5; padding:0 10px; }
+
+    body.has-side .app{ margin-left:230px; max-width:none; padding:0 36px 90px; }
+    body.has-side .hero, body.has-side .view-tabs{ display:none; }
+    body.has-side .page-head{ display:block; padding:30px 0 6px; }
+    .page-head h1{ color: var(--navy); font-size:24px; margin:0 0 4px; }
+    .page-head p{ margin:0; font-size:13px; color: var(--ink-soft); }
+    body.has-side .card{ margin:18px 0; }
+    body.has-side #view-salarie{ max-width:900px; }
+    body.has-side .total-bar{ margin-left:230px; }
   }
 
   @media print{
@@ -448,7 +471,21 @@
   }
 </style>
 </head>
-<body>
+<body class="has-side">
+<!-- Menu latéral (visible uniquement sur ordinateur) -->
+<aside class="side-nav no-print" id="side-nav">
+  <div class="side-brand">
+    <div class="brand-mark">A</div>
+    <div><div class="brand-name">Aid'Aux KM</div><div class="brand-sub">Frais kilométriques</div></div>
+  </div>
+  <button class="side-link active" type="button" data-go="salarie">🚗 Salarié</button>
+  <button class="side-link" type="button" data-go="direction">📊 Direction</button>
+  <div class="side-section">Direction</div>
+  <button class="side-link sub" type="button" data-go="direction" data-scroll="dir-dashboard-view">Forfaits salariés</button>
+  <button class="side-link sub" type="button" data-go="direction" data-scroll="dir-benef-view">Bénéficiaires</button>
+  <button class="side-link sub" type="button" data-go="direction" data-scroll="share-card">Lien salariés</button>
+  <div class="side-foot">Aid'Aux — Services d'aide à la personne</div>
+</aside>
 <div class="app">
 
   <div class="hero">
@@ -461,6 +498,12 @@
     </div>
     <h1>Frais kilométriques</h1>
     <p>1er lieu d'intervention / dernier lieu d'intervention — domicile. Enregistrez vos trajets, le total et le forfait se calculent tout seuls.</p>
+  </div>
+
+  <!-- En-tête de page (ordinateur, avec le menu latéral) -->
+  <div class="page-head">
+    <h1 id="page-title">Frais kilométriques</h1>
+    <p id="page-sub">1er lieu d'intervention / dernier lieu d'intervention — domicile.</p>
   </div>
 
   <!-- Onglets Salarié / Direction -->
@@ -2425,14 +2468,38 @@ window.KmBenef = (function(){
     if(totalBar) totalBar.style.display = 'none';
     if(window.DirectionView) window.DirectionView.activate();
   }
-  tabS.addEventListener('click', showSalarie);
-  tabD.addEventListener('click', showDirection);
+  tabS.addEventListener('click', () => { showSalarie(); syncSide('salarie'); });
+  tabD.addEventListener('click', () => { showDirection(); syncSide('direction'); });
+
+  // Menu latéral : mêmes actions que les onglets, + raccourcis vers les sections de la direction
+  const sideLinks = document.querySelectorAll('#side-nav [data-go]');
+  const title = document.getElementById('page-title');
+  const sub = document.getElementById('page-sub');
+  function syncSide(view, scrollId){
+    sideLinks.forEach(l => l.classList.toggle('active',
+      l.dataset.go === view && (scrollId ? l.dataset.scroll === scrollId : !l.dataset.scroll)));
+    if(title) title.textContent = view === 'direction' ? 'Direction' : 'Frais kilométriques';
+    if(sub) sub.textContent = view === 'direction'
+      ? 'Suivi des frais km des salariés et des feuilles bénéficiaires.'
+      : "1er lieu d'intervention / dernier lieu d'intervention — domicile.";
+  }
+  sideLinks.forEach(l => l.addEventListener('click', () => {
+    if(l.dataset.go === 'direction'){ if(!tabD.classList.contains('active')) showDirection(); }
+    else showSalarie();
+    syncSide(l.dataset.go, l.dataset.scroll);
+    const target = l.dataset.scroll && document.getElementById(l.dataset.scroll);
+    if(target && target.style.display !== 'none') target.scrollIntoView({ behavior:'smooth', block:'start' });
+    else window.scrollTo({ top:0, behavior:'smooth' });
+  }));
 
   // Lien envoyé aux salariés (?salarie) : pas d'onglet ni de vue direction
   if(new URLSearchParams(window.location.search).has('salarie')){
     const tabsBar = document.querySelector('.view-tabs');
     if(tabsBar) tabsBar.remove();
     viewD.remove();
+    const side = document.getElementById('side-nav');
+    if(side) side.remove();
+    document.body.classList.remove('has-side');
   }
 })();
 </script>
