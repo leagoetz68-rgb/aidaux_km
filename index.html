@@ -392,6 +392,13 @@
 
   #view-direction .benef-status-ok{ color:#0B7F7F; font-weight:600; }
   #view-direction .benef-status-todo{ color: var(--coral); font-weight:600; }
+  /* Lignes du tableau bénéficiaires : vert si signée, corail si non signée */
+  #view-direction table.dir-table tr.benef-row-ok td{ background:#E3F6F5; }
+  #view-direction table.dir-table tr.benef-row-ok td:first-child{ box-shadow: inset 4px 0 0 #13B3B3; }
+  #view-direction table.dir-table tr.benef-row-todo td{ background:#FDECE7; }
+  #view-direction table.dir-table tr.benef-row-todo td:first-child{ box-shadow: inset 4px 0 0 #E8583A; }
+  /* Séparation plus marquée quand on passe à un autre client */
+  #view-direction table.dir-table tr.benef-group-start td{ border-top:2px solid var(--navy); }
   #view-direction .row-actions{ white-space:nowrap; }
   #view-direction .row-actions .tab-btn{ margin-right:4px; }
   #view-direction .btn-suppr{
@@ -2169,8 +2176,20 @@ window.KmBenef = (function(){
     }
     els.benefEmpty.style.display = 'none';
     const B = window.KmBenef;
-    let totalKm = 0, nbSigned = 0;
+    // Tri par client (ordre alphabétique), sans tenir compte de Mme/M./Mr, des majuscules ni des accents,
+    // pour que « Mme Heinrich » et « Mme HEINRICH » se retrouvent ensemble ; puis par salarié.
+    const clientKey = (nom) => String(nom || '')
+      .normalize('NFD').replace(/[\u0300-\u036f]/g, '')
+      .replace(/^\s*(mme|mmes|mlle|mr|m|monsieur|madame|mademoiselle)\.?\s+/i, '')
+      .replace(/[\s,]+/g, ' ').trim().toLowerCase();
+    benefSheets.sort((a, b) =>
+      clientKey(a.beneficiaire).localeCompare(clientKey(b.beneficiaire), 'fr') ||
+      a.salarie.localeCompare(b.salarie, 'fr'));
+    let totalKm = 0, nbSigned = 0, prevClient = null;
     const rows = benefSheets.map((sh, idx) => {
+      const ck = clientKey(sh.beneficiaire);
+      const groupStart = prevClient !== null && ck !== prevClient;
+      prevClient = ck;
       const km = B.totalKm(sh.trajets);
       totalKm += km;
       const sig = sh.signature;
@@ -2178,7 +2197,8 @@ window.KmBenef = (function(){
       const status = sig
         ? `<span class="benef-status-ok">✔ Signée</span><br><small>${escapeHtml(sig.signataire)} — ${new Date(sig.signe_le).toLocaleDateString('fr-FR')}</small>`
         : '<span class="benef-status-todo">Non signée</span>';
-      return `<tr>
+      const rowCls = (sig ? 'benef-row-ok' : 'benef-row-todo') + (groupStart ? ' benef-group-start' : '');
+      return `<tr class="${rowCls}">
         <td>${escapeHtml(sh.salarie)}</td>
         <td>${escapeHtml(sh.beneficiaire)}</td>
         <td class="num">${sh.trajets.length}</td>
