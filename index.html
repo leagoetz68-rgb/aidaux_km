@@ -893,7 +893,7 @@ window.KmBenef = (function(){
       doc.rect(M, y + 3, 80, 26);
     }
 
-    doc.save(`km_beneficiaire_${slug(sheet.beneficiaire)}_${sheet.mois}.pdf`);
+    doc.save(`EVP.FORFAIT`);
   }
 
   // ---------- Fiche mensuelle d'un salarié (récapitulatif direction) ----------
@@ -1024,11 +1024,9 @@ window.KmBenef = (function(){
       doc.text(`Page ${i}/${n}`, W - M, H - 6, { align: 'right' });
       doc.setTextColor(0);
     }
-    // Nom du fichier au format paie : « 10_EVPFORFAIT_60€.pdf » (mois_EVPFORFAIT_total)
+    // Nom du fichier au format paie : « 10_EVPFORFAIT.EVP » (mois_EVPFORFAIT.EVP)
     const mm = String(info.mois || '').split('-')[1] || '';
-    const tot = Math.round(Number(info.totalRemb || 0) * 100) / 100;
-    const totTxt = Number.isInteger(tot) ? String(tot) : tot.toFixed(2).replace('.', ',');
-    doc.save(`${mm}_EVPFORFAIT_${totTxt}€.pdf`);
+    doc.save(`${mm}_EVPFORFAIT.EVP`);
   }
 
   // Regroupe les trajets par (salarié, bénéficiaire) et y rattache la signature
