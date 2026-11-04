@@ -411,7 +411,7 @@
 
   /* ===== Style des tableaux direction ===== */
   /* Valeurs à zéro atténuées pour alléger le tableau */
-  #view-direction td.num.zero{ color: var(--ink-soft); opacity:0.45; font-weight:500; }
+  #view-direction td.num.zero{ color:#000; }
   /* Cellule du nom : le contenu est mis en flex dans un conteneur, pas la cellule elle-même */
   #view-direction tr.salarie-row td:first-child{ display:table-cell; }
   #view-direction .sal-cell{ display:flex; align-items:center; gap:8px; }
@@ -431,13 +431,10 @@
   #view-direction table.dir-table thead th{ background: var(--navy); color:#fff; font-size:10.5px; }
   #view-direction table.dir-table tr.salarie-row:hover td{ background: var(--teal-wash); }
 
-  /* ===== Fond façon app : plus de blanc autour, un fond aux couleurs Aid'Aux ===== */
+  /* ===== Fond façon app : bleu marine autour de l'appli ===== */
   @media (min-width: 900px){
     body{
-      background:
-        radial-gradient(circle at 12% 18%, rgba(19,179,179,0.28), transparent 38%),
-        radial-gradient(circle at 88% 78%, rgba(232,88,58,0.18), transparent 36%),
-        linear-gradient(160deg, #DCE3F3 0%, #E4F2F3 100%);
+      background: var(--navy);
       background-attachment: fixed;
       min-height:100vh;
     }
